@@ -1,0 +1,11 @@
+int main() {
+  if ("a" != "b") {
+    int a = 1;
+  } else {
+  int b = 3;
+  }
+  while (2 > 1) {
+    break;
+  }
+  return 0;
+}

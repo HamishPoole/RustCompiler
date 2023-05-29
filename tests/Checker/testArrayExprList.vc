@@ -1,0 +1,3 @@
+int y[2];
+int z[];
+int x[2] = {1,3.0, "string",2};

@@ -1,0 +1,9 @@
+int f(int i, float f[], boolean b) {
+  return 1;
+}
+
+int main() {
+  float a[10];
+  f(1, a, true);
+  return 0;
+}

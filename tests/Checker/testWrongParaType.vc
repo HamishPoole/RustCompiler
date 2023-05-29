@@ -1,0 +1,13 @@
+int add(int a, int b) {
+  int z;
+  z = a + b;
+  return z;
+}
+
+int main() {
+  int c;
+  boolean m;
+  m = false;
+  c = add(m, 2);
+  return c;
+}

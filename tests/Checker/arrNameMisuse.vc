@@ -1,0 +1,9 @@
+void f(int x[]) { }
+
+int main() {
+  int y[11] = 5;
+
+  f(y);  //  OK
+  y + 1; //  ERROR
+  return 0;
+}
