@@ -1,12 +1,12 @@
 use std::fmt;
+use std::sync::Arc;
 
-use crate::ast::expression::ExprType;
 use crate::ast::Ast;
+use crate::ast::expression::ExprType;
 use crate::utils::SourcePosition;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum PrimitiveType {
-    ArrayType(ArrayType),
     BooleanType(BooleanType),
     ErrorType(ErrorType),
     FloatType(FloatType),
@@ -15,10 +15,20 @@ pub enum PrimitiveType {
     VoidType(VoidType),
 }
 
+// #[derive(Clone, Debug)]
+// pub enum PrimitiveNonRecursive {
+//     BooleanType(BooleanType),
+//     ErrorType(ErrorType),
+//     FloatType(FloatType),
+//     IntType(IntType),
+//     StringType(StringType),
+//     VoidType(VoidType),
+// }
+
 #[derive(Debug)]
 pub struct ArrayType {
     source_position: SourcePosition,
-    array_type: Box<PrimitiveType>,
+    array_type: Arc<Box<PrimitiveType>>,
     expression: ExprType,
 }
 
@@ -35,7 +45,21 @@ impl fmt::Display for ArrayType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+impl ArrayType {
+    pub fn new(
+        source_position: SourcePosition,
+        array_type: Arc<Box<PrimitiveType>>,
+        expression: ExprType,
+    ) -> Self {
+        Self {
+            source_position,
+            array_type,
+            expression,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct BooleanType {
     source_position: SourcePosition,
 }
@@ -59,7 +83,7 @@ impl BooleanType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ErrorType {
     source_position: SourcePosition,
 }
@@ -77,7 +101,7 @@ impl fmt::Display for ErrorType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct FloatType {
     source_position: SourcePosition,
 }
@@ -125,7 +149,7 @@ impl IntType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StringType {
     source_position: SourcePosition,
 }
@@ -149,7 +173,7 @@ impl StringType {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct VoidType {
     source_position: SourcePosition,
 }

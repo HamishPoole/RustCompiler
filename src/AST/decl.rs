@@ -1,11 +1,12 @@
 use std::fmt;
 
+use crate::ast::array_type::TypeVariant;
+use crate::ast::Ast;
 use crate::ast::expression::ExprType;
 use crate::ast::ident::Ident;
 use crate::ast::list::{ListType, ParamList};
 use crate::ast::primitive_types::PrimitiveType;
 use crate::ast::statement::StmtType;
-use crate::ast::Ast;
 use crate::utils::SourcePosition;
 
 #[derive(Debug)]
@@ -19,7 +20,7 @@ pub enum DeclType {
 #[derive(Debug)]
 pub struct FuncDecl {
     source_position: SourcePosition,
-    type_function: Box<PrimitiveType>,
+    type_function: Box<TypeVariant>,
     ident: Box<Ident>,
     param_list: Box<ListType>,
     statements: Box<StmtType>,
@@ -45,7 +46,7 @@ impl fmt::Display for FuncDecl {
 impl FuncDecl {
     pub fn new(
         source_position: SourcePosition,
-        t: Box<PrimitiveType>,
+        t: Box<TypeVariant>,
         i: Box<Ident>,
         param_list: Box<ListType>,
         statement: Box<StmtType>,
@@ -63,8 +64,8 @@ impl FuncDecl {
 #[derive(Debug)]
 pub struct GlobalVarDecl {
     source_position: SourcePosition,
-    t: Box<PrimitiveType>,
-    i: Box<Box<Ident>>,
+    t: Box<TypeVariant>,
+    i: Box<Ident>,
     expr: Box<ExprType>,
 }
 
@@ -88,8 +89,8 @@ impl Ast for GlobalVarDecl {
 impl GlobalVarDecl {
     pub fn new(
         source_position: SourcePosition,
-        t: Box<PrimitiveType>,
-        i: Box<Box<Ident>>,
+        t: Box<TypeVariant>,
+        i: Box<Ident>,
         expr: Box<ExprType>,
     ) -> Self {
         Self {
@@ -104,8 +105,8 @@ impl GlobalVarDecl {
 #[derive(Debug)]
 pub struct LocalVarDecl {
     source_position: SourcePosition,
-    t: Box<PrimitiveType>,
-    i: Box<Box<Ident>>,
+    t: Box<TypeVariant>,
+    i: Box<Ident>,
     expr: Box<ExprType>,
 }
 
@@ -129,8 +130,8 @@ impl Ast for LocalVarDecl {
 impl LocalVarDecl {
     pub fn new(
         source_position: SourcePosition,
-        t: Box<PrimitiveType>,
-        i: Box<Box<Ident>>,
+        t: Box<TypeVariant>,
+        i: Box<Ident>,
         expr: Box<ExprType>,
     ) -> Self {
         Self {
@@ -145,7 +146,7 @@ impl LocalVarDecl {
 #[derive(Debug)]
 pub struct ParaDecl {
     source_position: SourcePosition,
-    t: Box<PrimitiveType>,
+    t: Box<TypeVariant>,
     i: Box<Ident>,
 }
 
@@ -167,7 +168,7 @@ impl fmt::Display for ParaDecl {
 }
 
 impl ParaDecl {
-    pub fn new(source_position: SourcePosition, t: Box<PrimitiveType>, i: Box<Ident>) -> Self {
+    pub fn new(source_position: SourcePosition, t: Box<TypeVariant>, i: Box<Ident>) -> Self {
         Self {
             source_position,
             t,

@@ -1,14 +1,14 @@
 use std::fmt;
 
-use crate::ast::decl::DeclType;
 use crate::ast::Ast;
+use crate::ast::decl::DeclType;
 use crate::utils::SourcePosition;
 
 #[derive(Debug)]
 pub struct Ident {
-    value: String,
-    source_position: SourcePosition,
-    decl: Option<DeclType>,
+    pub value: String,
+    pub source_position: SourcePosition,
+    pub decl: Option<DeclType>,
 }
 
 impl Ast for Ident {
@@ -29,6 +29,14 @@ impl Ident {
             value,
             source_position,
             decl,
+        }
+    }
+
+    pub fn copy_with_null_decl(&self) -> Self {
+        Self {
+            value: self.value.clone(),
+            source_position: self.source_position,
+            decl: None,
         }
     }
 }

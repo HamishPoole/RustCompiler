@@ -2,18 +2,13 @@ use std::any::{Any, TypeId};
 use std::fmt;
 use std::fmt::{Debug, Display};
 
-use regex::internal::Program;
-
 use crate::ast::decl::{FuncDecl, GlobalVarDecl, LocalVarDecl, ParaDecl};
 use crate::ast::expression::{
     Arg, ArrayExpr, ArrayInitExpr, AssignExpr, BinaryExpr, BooleanExpr, CallExpr, FloatExpr,
     IntExpr, StringExpr, UnaryExpr, VarExpr,
 };
 use crate::ast::ident::Ident;
-use crate::ast::list::{
-    ArgList, ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ParamList,
-    StmtList,
-};
+use crate::ast::list::{ArgList, ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ListType, ParamList, StmtList};
 use crate::ast::literals::{
     BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral, Terminal,
 };
@@ -28,15 +23,15 @@ use crate::ast::variable::Var;
 use crate::utils::SourcePosition;
 
 pub mod decl;
-pub mod empty_expr;
 pub mod expression;
 pub mod ident;
-pub(crate) mod list;
+pub mod list;
 pub mod literals;
 pub mod primitive_types;
 pub mod program;
 pub mod statement;
 pub mod variable;
+pub mod array_type;
 
 pub trait Ast: Debug + Display {
     fn visit(&self);
@@ -116,3 +111,12 @@ pub enum AstNode {
     VoidType(VoidType),
     WhileStmt(WhileStmt),
 }
+
+#[derive(Debug)]
+pub struct Program {
+    pub decl_list: ListType,
+}
+
+
+
+

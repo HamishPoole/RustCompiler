@@ -1,11 +1,10 @@
 use std::fmt;
 
-use crate::ast::empty_expr::EmptyExpr;
+use crate::ast::Ast;
 use crate::ast::ident::Ident;
 use crate::ast::list::{ArgList, ListType};
 use crate::ast::literals::{BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral};
 use crate::ast::variable::Var;
-use crate::ast::Ast;
 use crate::utils::SourcePosition;
 
 #[derive(Debug)]
@@ -45,103 +44,6 @@ impl ExprType {
             ExprType::UnaryExpr(expr) => &expr.source_position,
             ExprType::VarExpr(expr) => &expr.source_position,
             _ => panic!("Variant does not have a source_position"),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct CallExpr {
-    source_position: SourcePosition,
-    ident: Ident,
-    argument_list: Box<ArgList>,
-}
-
-impl Ast for CallExpr {
-    fn visit(&self) {
-        println!("Visiting CallExpr node.");
-        todo!("Implement visitCallExpr function in checker.rs")
-    }
-}
-
-impl std::fmt::Display for CallExpr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{ source_position: {:?}, ident: {:?}, argument_list: {:?} }}",
-            self.source_position, self.ident, self.argument_list
-        )
-    }
-}
-
-impl CallExpr {
-    pub fn new(source_position: SourcePosition, ident: Ident, argument_list: Box<ArgList>) -> Self {
-        Self {
-            source_position,
-            ident,
-            argument_list,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Arg {
-    pub(crate) source_position: SourcePosition,
-    e: Box<ExprType>,
-}
-
-impl Ast for Arg {
-    fn visit(&self) {
-        println!("Visiting Arg node.");
-        todo!("Implement visitArg function in checker.rs")
-    }
-}
-
-impl std::fmt::Display for Arg {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{ source_position: {:?}, e: {:?} }}",
-            self.source_position, self.e
-        )
-    }
-}
-
-impl Arg {
-    pub fn new(source_position: SourcePosition, e: Box<ExprType>) -> Self {
-        Self { source_position, e }
-    }
-}
-
-#[derive(Debug)]
-pub struct UnaryExpr {
-    pub(crate) source_position: SourcePosition,
-    o: Operator,
-    e: Box<ExprType>,
-}
-
-impl Ast for UnaryExpr {
-    fn visit(&self) {
-        println!("Visiting UnaryExpr node.");
-        todo!("Implement visitUnaryExpr function in checker.rs")
-    }
-}
-
-impl std::fmt::Display for UnaryExpr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{{ source_position: {:?}, o: {:?}, e: {:?} }}",
-            self.source_position, self.o, self.e
-        )
-    }
-}
-
-impl UnaryExpr {
-    pub fn new(source_position: SourcePosition, o: Operator, e: Box<ExprType>) -> Self {
-        Self {
-            source_position,
-            o,
-            e,
         }
     }
 }
@@ -245,6 +147,124 @@ impl ArrayInitExpr {
         }
     }
 }
+
+#[derive(Debug)]
+pub struct Arg {
+    pub(crate) source_position: SourcePosition,
+    e: Box<ExprType>,
+}
+
+impl Ast for Arg {
+    fn visit(&self) {
+        println!("Visiting Arg node.");
+        todo!("Implement visitArg function in checker.rs")
+    }
+}
+
+impl std::fmt::Display for Arg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{ source_position: {:?}, e: {:?} }}",
+            self.source_position, self.e
+        )
+    }
+}
+
+impl Arg {
+    pub fn new(source_position: SourcePosition, e: Box<ExprType>) -> Self {
+        Self { source_position, e }
+    }
+}
+
+#[derive(Debug)]
+pub struct BooleanExpr {
+    source_position: SourcePosition,
+    boolean_literal: Box<BooleanLiteral>, // Assuming FloatLiteral struct is defined
+}
+
+impl Ast for BooleanExpr {
+    fn visit(&self) {
+        println!("Visiting BooleanExpr node.");
+        todo!("Implement visitBooleanExpr function in checker.rs")
+    }
+}
+
+impl fmt::Display for BooleanExpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{{ source_position: {:?}, fl: {:?} }}",
+            self.source_position, self.boolean_literal
+        )
+    }
+}
+
+impl BooleanExpr {
+    pub fn new(source_position: SourcePosition, int_literal: Box<BooleanLiteral>) -> Self {
+        Self {
+            source_position,
+            boolean_literal: int_literal,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CallExpr {
+    source_position: SourcePosition,
+    ident: Ident,
+    argument_list: Box<ArgList>,
+}
+
+impl Ast for CallExpr {
+    fn visit(&self) {
+        println!("Visiting CallExpr node.");
+        todo!("Implement visitCallExpr function in checker.rs")
+    }
+}
+
+impl std::fmt::Display for CallExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{{ source_position: {:?}, ident: {:?}, argument_list: {:?} }}",
+            self.source_position, self.ident, self.argument_list
+        )
+    }
+}
+
+impl CallExpr {
+    pub fn new(source_position: SourcePosition, ident: Ident, argument_list: Box<ArgList>) -> Self {
+        Self {
+            source_position,
+            ident,
+            argument_list,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct EmptyExpr {
+    source_position: SourcePosition,
+}
+
+impl fmt::Display for EmptyExpr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{ source_position: {:?} }}", self.source_position)
+    }
+}
+
+impl EmptyExpr {
+    pub fn new(source_position: SourcePosition) -> Self {
+        Self { source_position }
+    }
+
+    pub fn visit(&self) {
+        println!("Visiting EmptyExpr node.");
+        todo!("Implement visitEmptyExpr function in checker.rs")
+    }
+}
+
 
 #[derive(Debug)]
 pub struct VarExpr {
@@ -413,34 +433,37 @@ impl StringExpr {
     }
 }
 
+
 #[derive(Debug)]
-pub struct BooleanExpr {
-    source_position: SourcePosition,
-    boolean_literal: Box<BooleanLiteral>, // Assuming FloatLiteral struct is defined
+pub struct UnaryExpr {
+    pub(crate) source_position: SourcePosition,
+    o: Operator,
+    e: Box<ExprType>,
 }
 
-impl Ast for BooleanExpr {
+impl Ast for UnaryExpr {
     fn visit(&self) {
-        println!("Visiting BooleanExpr node.");
-        todo!("Implement visitBooleanExpr function in checker.rs")
+        println!("Visiting UnaryExpr node.");
+        todo!("Implement visitUnaryExpr function in checker.rs")
     }
 }
 
-impl fmt::Display for BooleanExpr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for UnaryExpr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{{ source_position: {:?}, fl: {:?} }}",
-            self.source_position, self.boolean_literal
+            "{{ source_position: {:?}, o: {:?}, e: {:?} }}",
+            self.source_position, self.o, self.e
         )
     }
 }
 
-impl BooleanExpr {
-    pub fn new(source_position: SourcePosition, int_literal: Box<BooleanLiteral>) -> Self {
+impl UnaryExpr {
+    pub fn new(source_position: SourcePosition, o: Operator, e: Box<ExprType>) -> Self {
         Self {
             source_position,
-            boolean_literal: int_literal,
+            o,
+            e,
         }
     }
 }

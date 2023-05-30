@@ -1,10 +1,10 @@
-use std::any::Any;
 use std::{fmt, println, todo};
+use std::any::Any;
 
+use crate::ast::Ast;
 use crate::ast::decl::{DeclType, ParaDecl};
 use crate::ast::expression::ExprType;
 use crate::ast::statement::StmtType;
-use crate::ast::Ast;
 use crate::utils::SourcePosition;
 
 #[derive(Debug)]
@@ -89,7 +89,7 @@ impl ArgList {
 pub struct DeclList {
     source_position: SourcePosition,
     d: Box<DeclType>,
-    dl: Box<DeclList>,
+    dl: Box<ListType>,
 }
 
 impl Ast for DeclList {
@@ -110,7 +110,7 @@ impl fmt::Display for DeclList {
 }
 
 impl DeclList {
-    pub fn new(source_position: SourcePosition, d: Box<DeclType>, dl: Box<DeclList>) -> Self {
+    pub fn new(source_position: SourcePosition, d: Box<DeclType>, dl: Box<ListType>) -> Self {
         Self {
             source_position,
             d,
@@ -204,6 +204,7 @@ impl EmptyArrayExprList {
         Self { source_position }
     }
 }
+
 impl StmtList {
     pub fn new(
         source_position: SourcePosition,
@@ -247,6 +248,7 @@ impl EmptyStmtList {
         Self { source_position }
     }
 }
+
 #[derive(Debug)]
 pub struct ParamList {
     source_position: SourcePosition,

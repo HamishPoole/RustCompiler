@@ -39,8 +39,6 @@ fn main() {
     let input_filepath = cli.input_filepath.as_deref().unwrap();
     let output_filepath = cli.output_filepath.as_deref().unwrap();
 
-    // test_scanner(input_filepath, output_filepath);
-
     let contents_string = std::fs::read_to_string(input_filepath).expect("File reading error.");
 
     let mut scanner = Scanner::new(contents_string);
