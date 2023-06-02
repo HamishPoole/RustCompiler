@@ -1,60 +1,42 @@
 use std::fmt;
 use std::sync::Arc;
 
-use crate::ast::Ast;
+use crate::ast::{Ast, PrintingVisit};
 use crate::ast::expression::ExprType;
-use crate::utils::SourcePosition;
+use crate::globals::TAB_SIZE;
+use crate::utils::{generate_tabbed_string, SourcePosition};
 
 #[derive(Clone, Debug)]
-pub enum PrimitiveType {
+pub enum AstTypes {
     BooleanType(BooleanType),
-    ErrorType(ErrorType),
     FloatType(FloatType),
     IntType(IntType),
     StringType(StringType),
     VoidType(VoidType),
+    ErrorType(ErrorType),
 }
 
-// #[derive(Clone, Debug)]
-// pub enum PrimitiveNonRecursive {
-//     BooleanType(BooleanType),
-//     ErrorType(ErrorType),
-//     FloatType(FloatType),
-//     IntType(IntType),
-//     StringType(StringType),
-//     VoidType(VoidType),
-// }
-
-#[derive(Debug)]
-pub struct ArrayType {
-    source_position: SourcePosition,
-    array_type: Arc<Box<PrimitiveType>>,
-    expression: ExprType,
-}
-
-impl Ast for ArrayType {
-    fn visit(&self) {
-        println!("Visiting ArrayType node.");
-        // Implement visitArrayType function...
+impl PrintingVisit for AstTypes {
+    fn visit_for_printing(&self, depth: i32) {
+        match self {
+            AstTypes::BooleanType(boolean_type) => boolean_type.visit_for_printing(depth),
+            AstTypes::FloatType(float_type) => float_type.visit_for_printing(depth),
+            AstTypes::IntType(int_type) => int_type.visit_for_printing(depth),
+            AstTypes::StringType(string_type) => string_type.visit_for_printing(depth),
+            AstTypes::VoidType(void_type) => void_type.visit_for_printing(depth),
+            AstTypes::ErrorType(error_type) => error_type.visit_for_printing(depth),
+        }
     }
 }
 
-impl fmt::Display for ArrayType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ArrayType")
-    }
-}
-
-impl ArrayType {
-    pub fn new(
-        source_position: SourcePosition,
-        array_type: Arc<Box<PrimitiveType>>,
-        expression: ExprType,
-    ) -> Self {
-        Self {
-            source_position,
-            array_type,
-            expression,
+impl AstTypes {
+    fn is_primitive_type(&self) -> bool {
+        match self {
+            AstTypes::BooleanType(_) => true,
+            AstTypes::FloatType(_) => true,
+            AstTypes::IntType(_) => true,
+            AstTypes::VoidType(_) => true,
+            _ => false,
         }
     }
 }
@@ -65,7 +47,7 @@ pub struct BooleanType {
 }
 
 impl Ast for BooleanType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting BooleanType node.");
         // Implement visitBooleanType function...
     }
@@ -74,6 +56,14 @@ impl Ast for BooleanType {
 impl fmt::Display for BooleanType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "BooleanType")
+    }
+}
+
+impl PrintingVisit for BooleanType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
     }
 }
 
@@ -89,7 +79,7 @@ pub struct ErrorType {
 }
 
 impl Ast for ErrorType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting ErrorType node.");
         // Implement visitErrorType function...
     }
@@ -101,13 +91,21 @@ impl fmt::Display for ErrorType {
     }
 }
 
+impl PrintingVisit for ErrorType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct FloatType {
     source_position: SourcePosition,
 }
 
 impl Ast for FloatType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting FloatType node.");
         // Implement visitFloatType function...
     }
@@ -116,6 +114,14 @@ impl Ast for FloatType {
 impl fmt::Display for FloatType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "FloatType")
+    }
+}
+
+impl PrintingVisit for FloatType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
     }
 }
 
@@ -131,7 +137,7 @@ pub struct IntType {
 }
 
 impl Ast for IntType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntType node.");
         // Implement visitIntType function...
     }
@@ -140,6 +146,14 @@ impl Ast for IntType {
 impl fmt::Display for IntType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "IntType")
+    }
+}
+
+impl PrintingVisit for IntType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
     }
 }
 
@@ -155,7 +169,7 @@ pub struct StringType {
 }
 
 impl Ast for StringType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting StringType node.");
         // Implement visitStringType function...
     }
@@ -164,6 +178,14 @@ impl Ast for StringType {
 impl fmt::Display for StringType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "StringType")
+    }
+}
+
+impl PrintingVisit for StringType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
     }
 }
 
@@ -179,7 +201,7 @@ pub struct VoidType {
 }
 
 impl Ast for VoidType {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting VoidType node.");
         // Implement visitVoidType function...
     }
@@ -188,6 +210,14 @@ impl Ast for VoidType {
 impl fmt::Display for VoidType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "void")
+    }
+}
+
+impl PrintingVisit for VoidType {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{}", tabbed_string);
     }
 }
 

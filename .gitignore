@@ -32,6 +32,7 @@ Cargo.lock
 /venv/
 bin/
 build/
+defaults/
 deps/
 exampleProject
 gen/

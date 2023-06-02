@@ -183,7 +183,6 @@ fn handle_operators(adt: &mut ScannerProductType) -> Result<ScannerProductType, 
         }
         ('<', _) => {
             accept_next_character(adt);
-            accept_next_character(adt);
             Ok(ScannerProductType {
                 final_token_kind: TokenKind::LT,
                 ..adt.clone()

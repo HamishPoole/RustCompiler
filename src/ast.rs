@@ -2,24 +2,27 @@ use std::any::{Any, TypeId};
 use std::fmt;
 use std::fmt::{Debug, Display};
 
+use crate::ast::array_type::ArrayType;
 use crate::ast::decl::{FuncDecl, GlobalVarDecl, LocalVarDecl, ParaDecl};
 use crate::ast::expression::{
     Arg, ArrayExpr, ArrayInitExpr, AssignExpr, BinaryExpr, BooleanExpr, CallExpr, FloatExpr,
     IntExpr, StringExpr, UnaryExpr, VarExpr,
 };
 use crate::ast::ident::Ident;
-use crate::ast::list::{ArgList, ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ListType, ParamList, StmtList};
+use crate::ast::list::{ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ListType, ParamList, StmtList};
 use crate::ast::literals::{
     BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral, Terminal,
 };
 use crate::ast::primitive_types::{
-    ArrayType, BooleanType, ErrorType, FloatType, IntType, StringType, VoidType,
+    BooleanType, ErrorType, FloatType, IntType, StringType, VoidType,
 };
+use crate::ast::program::Program;
 use crate::ast::statement::{
     BreakStmt, CompoundStmt, ContinueStmt, EmptyCompoundStmt, EmptyStmt, ExprStmt, ForStmt, IfStmt,
     ReturnStmt, WhileStmt,
 };
-use crate::ast::variable::Var;
+use crate::ast::variable::VarUntyped;
+use crate::globals::TAB_SIZE;
 use crate::utils::SourcePosition;
 
 pub mod decl;
@@ -34,31 +37,18 @@ pub mod variable;
 pub mod array_type;
 
 pub trait Ast: Debug + Display {
-    fn visit(&self);
+    fn visit_for_semantics_checking(&self);
 }
-//
-// #[derive(Debug)]
-// pub struct AstNode {
-//     source_position: SourcePosition,
-// }
-//
-// impl fmt::Display for AstNode {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "AstNode")
-//     }
-// }
-//
-// impl AST for AstNode {
-//     fn visit(&self) {
-//         println!("Visiting AST_root node.");
-//         // Implement visitAST_root function...
-//
-// }
+
+pub trait PrintingVisit {
+    fn visit_for_printing(&self, depth: i32) {}
+}
+
 
 #[derive(Debug)]
 pub enum AstNode {
     Arg(Arg),
-    ArgList(ArgList),
+    ArgList(ListType),
     ArrayExpr(ArrayExpr),
     ArrayExprList(ArrayExprList),
     ArrayInitExpr(ArrayInitExpr),
@@ -106,17 +96,9 @@ pub enum AstNode {
     StringType(StringType),
     Terminal(Terminal),
     UnaryExpr(UnaryExpr),
-    Var(Var),
+    Var(VarUntyped),
     VarExpr(VarExpr),
     VoidType(VoidType),
     WhileStmt(WhileStmt),
 }
-
-#[derive(Debug)]
-pub struct Program {
-    pub decl_list: ListType,
-}
-
-
-
 

@@ -7,45 +7,57 @@ use std::path::PathBuf;
 
 use clap::{Arg, ArgAction, ArgMatches, Args, Command, FromArgMatches, Parser, Subcommand};
 use log::error;
+use regex::internal::Compiler;
 
-use vc_compiler::parser::ParserData;
-use vc_compiler::scanner::Scanner;
-use vc_compiler::utils::print_stuff;
+use vc::{test_parser, test_scanner};
+use vc::parser::{parse_program, ParserData};
+use vc::scanner::Scanner;
 
 #[derive(Parser)]
-#[command(author, version, about)]
-struct Arguments {
-    /// Filename to compile.
-    #[arg(required = true, index = 1)]
+#[clap(author = "Hamish Poole", about = "A compiler for the VC language.")]
+#[command(propagate_version = true)]
+struct Cli {
+    /// Filename to compile
     input_filepath: Option<String>,
 
     /// Output filepath.
-    #[arg(required = true, index = 2)]
     output_filepath: Option<String>,
+
+    #[command(subcommand)]
+    command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    Test {
-        #[arg(short, long)]
-        list: bool,
-    },
+    /// Scans the input file and outputs tokens found.
+    Scan,
+
+    /// Parses the input file and prints the AST produced.
+    Parse,
 }
 
+#[derive(Args)]
+struct CommandArgs {}
+
 fn main() {
-    print_stuff();
-    let cli = Arguments::parse();
+    let cli = Cli::parse();
 
     let input_filepath = cli.input_filepath.as_deref().unwrap();
     let output_filepath = cli.output_filepath.as_deref().unwrap();
 
-    let contents_string = std::fs::read_to_string(input_filepath).expect("File reading error.");
+    match &cli.command {
+        Commands::Scan => {
+            test_scanner(input_filepath, output_filepath);
+        }
+        Commands::Parse=> {
+            test_parser(input_filepath, output_filepath);
+        }
+    }
 
-    let mut scanner = Scanner::new(contents_string);
-    let mut ast = ParserData::new(scanner);
+    // let mut scanner = Scanner::new(contents_string);
+    // let mut ast = parse_program(scanner);
 }
 
-fn generate_filetype(filename: &str) {}
 
 #[cfg(test)]
 mod tests {

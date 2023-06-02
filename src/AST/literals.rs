@@ -1,7 +1,8 @@
 use std::fmt;
 
-use crate::ast::Ast;
-use crate::utils::SourcePosition;
+use crate::ast::{Ast, PrintingVisit};
+use crate::globals::TAB_SIZE;
+use crate::utils::{generate_tabbed_string, SourcePosition};
 
 #[derive(Clone, Debug)]
 pub struct Operator {
@@ -10,7 +11,7 @@ pub struct Operator {
 }
 
 impl Ast for Operator {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -23,6 +24,14 @@ impl fmt::Display for Operator {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for Operator {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 
@@ -42,7 +51,7 @@ pub struct Terminal {
 }
 
 impl Ast for Terminal {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -55,6 +64,14 @@ impl fmt::Display for Terminal {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for Terminal {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 
@@ -74,7 +91,7 @@ pub struct IntLiteral {
 }
 
 impl Ast for IntLiteral {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -87,6 +104,14 @@ impl fmt::Display for IntLiteral {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for IntLiteral {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 
@@ -106,7 +131,7 @@ pub struct FloatLiteral {
 }
 
 impl Ast for FloatLiteral {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -119,6 +144,14 @@ impl fmt::Display for FloatLiteral {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for FloatLiteral {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 
@@ -138,7 +171,7 @@ pub struct BooleanLiteral {
 }
 
 impl Ast for BooleanLiteral {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -151,6 +184,14 @@ impl fmt::Display for BooleanLiteral {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for BooleanLiteral {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 
@@ -170,7 +211,7 @@ pub struct StringLiteral {
 }
 
 impl Ast for StringLiteral {
-    fn visit(&self) {
+    fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
     }
@@ -183,6 +224,14 @@ impl fmt::Display for StringLiteral {
             "{{ source_position: {:?}, il: {:?} }}",
             self.source_position, self.spelling
         )
+    }
+}
+
+impl PrintingVisit for StringLiteral {
+    fn visit_for_printing(&self, depth: i32) {
+        let tabbed_string = generate_tabbed_string(
+            std::any::type_name::<Self>(), depth);
+        println!("{} ({})", tabbed_string, self.spelling);
     }
 }
 

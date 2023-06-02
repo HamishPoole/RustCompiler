@@ -87,13 +87,16 @@ impl Iterator for Counter {
         Some(self.count)
     }
 }
-TODO: Implement Iterator traight for Scanner.
+TODO: Implement Iterator trait for Scanner.
  */
 
 fn get_token(adt: &mut ScannerProductType) -> ScannerProductType {
     skip_spaces_comments_newlines(adt);
+
     error!("Reached handle_tokens");
+    error!("Current token is {:?}", adt.curr_token_spelling);
     let result = handle_tokens(adt).unwrap();
+    error!("Result is {:?}", result);
     let end_diff: i32 = result.curr_token_spelling.len() as i32 - 1;
 
     ScannerProductType {
@@ -189,7 +192,6 @@ fn handle_single_line_comment(adt: &mut ScannerProductType) {
 }
 
 fn handle_multiline_comment(adt: &mut ScannerProductType) {
-    error!("Reached multiline comment");
     let curr_char = get_current_char(adt);
     let next_char = get_next_char(adt);
 
@@ -198,6 +200,7 @@ fn handle_multiline_comment(adt: &mut ScannerProductType) {
         ('*', '/') => {
             skip_next_character(adt);
             skip_next_character(adt);
+            skip_spaces_comments_newlines(adt);
         }
         (_, _) => {
             skip_next_character(adt);
@@ -212,6 +215,9 @@ fn handle_remove_spaces(adt: &mut ScannerProductType) {
 }
 
 fn handle_tab(adt: &mut ScannerProductType) {
+    error!("Reached handle tab");
+    error!("Current character is {:?}", get_current_char(adt));
+    error!("Current source position is {:?}", adt.curr_source_pos);
     // NB, if this breaks, kick self for skipping unit test.
     adt.curr_source_pos.char_start += TAB_SIZE - (adt.curr_source_pos.char_start % TAB_SIZE);
     adt.curr_source_pos.char_end += TAB_SIZE - (adt.curr_source_pos.char_end % TAB_SIZE);
@@ -220,6 +226,9 @@ fn handle_tab(adt: &mut ScannerProductType) {
 }
 
 fn handle_newline(adt: &mut ScannerProductType) {
+    error!("Reached handle newline");
+    error!("Current character is {:?}", get_current_char(adt));
+
     if adt.file_contents[adt.curr_char_index] == '\n' {
         skip_next_character(adt);
     }
@@ -230,7 +239,7 @@ fn handle_newline(adt: &mut ScannerProductType) {
 mod tests {
     use test_log::test;
 
-    use crate::scanner::{accept_next_character, skip_next_character, ScannerProductType};
+    use crate::scanner::{accept_next_character, ScannerProductType, skip_next_character};
     use crate::token::TokenKind;
     use crate::utils::SourcePosition;
 

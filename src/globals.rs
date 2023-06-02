@@ -1,1 +1,1 @@
-pub(crate) const TAB_SIZE: i32 = 4;
+pub const TAB_SIZE: i32 = 4;
