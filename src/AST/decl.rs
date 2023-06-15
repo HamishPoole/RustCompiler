@@ -1,16 +1,18 @@
 use std::fmt;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
-use crate::ast::{Ast, PrintingVisit};
-use crate::ast::array_type::AstTypeVariant;
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
+use crate::ast::array_type::{ArrayType, AstTypeVariant};
 use crate::ast::expression::ExprType;
 use crate::ast::ident::Ident;
 use crate::ast::list::{ListType, ParamList};
 use crate::ast::primitive_types::AstTypes;
 use crate::ast::statement::StmtType;
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_tabbed_string, SourcePosition};
+use crate::utils::{generate_tabbed_string, print_newline_and_indent, SourcePosition};
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum DeclType {
     FuncDecl(FuncDecl),
     GlobalVarDecl(GlobalVarDecl),
@@ -18,18 +20,29 @@ pub enum DeclType {
     ParaDecl(ParaDecl),
 }
 
-impl PrintingVisit for DeclType {
+impl PrintAST for DeclType {
     fn visit_for_printing(&self, depth: i32) {
         match self {
-            DeclType::FuncDecl(func_decl) => func_decl.visit_for_printing(depth ),
-            DeclType::GlobalVarDecl(global_var_decl) => global_var_decl.visit_for_printing(depth ),
-            DeclType::LocalVarDecl(local_var_decl) => local_var_decl.visit_for_printing(depth ),
-            DeclType::ParaDecl(para_decl) => para_decl.visit_for_printing(depth ),
+            DeclType::FuncDecl(func_decl) => func_decl.visit_for_printing(depth),
+            DeclType::GlobalVarDecl(global_var_decl) => global_var_decl.visit_for_printing(depth),
+            DeclType::LocalVarDecl(local_var_decl) => local_var_decl.visit_for_printing(depth),
+            DeclType::ParaDecl(para_decl) => para_decl.visit_for_printing(depth),
         }
     }
 }
 
-#[derive(Debug)]
+impl PrintUnparsedAST for DeclType {
+    fn unparse_to_code(&self, depth: i32) {
+        match self {
+            DeclType::FuncDecl(func_decl) => func_decl.unparse_to_code(depth),
+            DeclType::GlobalVarDecl(global_var_decl) => global_var_decl.unparse_to_code(depth),
+            DeclType::LocalVarDecl(local_var_decl) => local_var_decl.unparse_to_code(depth),
+            DeclType::ParaDecl(para_decl) => para_decl.unparse_to_code(depth),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct FuncDecl {
     source_position: SourcePosition,
     function_type: Box<AstTypeVariant>,
@@ -38,7 +51,7 @@ pub struct FuncDecl {
     statements: Box<StmtType>,
 }
 
-impl Ast for FuncDecl {
+impl Checking for FuncDecl {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting FuncDecl node.");
         // Implement visitFuncDecl function...
@@ -55,7 +68,7 @@ impl fmt::Display for FuncDecl {
     }
 }
 
-impl PrintingVisit for FuncDecl {
+impl PrintAST for FuncDecl {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
@@ -64,6 +77,18 @@ impl PrintingVisit for FuncDecl {
         self.ident.visit_for_printing(depth + 1);
         self.param_list.visit_for_printing(depth + 1);
         self.statements.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for FuncDecl {
+    fn unparse_to_code(&self, depth: i32) {
+        print_newline_and_indent(depth);
+        self.function_type.unparse_to_code(depth);
+        print!(" ");
+        self.ident.unparse_to_code(depth);
+        print!("(");
+        self.param_list.unparse_to_code(depth);
+        self.statements.unparse_to_code(depth);
     }
 }
 
@@ -85,11 +110,11 @@ impl FuncDecl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GlobalVarDecl {
     source_position: SourcePosition,
-    t: Box<AstTypeVariant>,
-    i: Box<Ident>,
+    declaration_type: Box<AstTypeVariant>,
+    ident: Box<Ident>,
     expr: Box<ExprType>,
 }
 
@@ -98,46 +123,64 @@ impl fmt::Display for GlobalVarDecl {
         write!(
             f,
             "{{ source_position: {:?}, t: {:?}, i: {:?}, expr: {:?} }}",
-            self.source_position, self.t, self.i, self.expr
+            self.source_position, self.declaration_type, self.ident, self.expr
         )
     }
 }
 
-impl Ast for GlobalVarDecl {
+impl Checking for GlobalVarDecl {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting GlobalVarDecl node.");
         // Implement visitGlobalVarDecl function...
     }
 }
 
-impl PrintingVisit for GlobalVarDecl {
+impl PrintAST for GlobalVarDecl {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
-        self.t.visit_for_printing(depth + 1);
-        self.i.visit_for_printing(depth + 1);
+        self.declaration_type.visit_for_printing(depth + 1);
+        self.ident.visit_for_printing(depth + 1);
         self.expr.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for GlobalVarDecl {
+    fn unparse_to_code(&self, depth: i32) {
+        print_newline_and_indent(depth);
+        self.declaration_type.unparse_to_code(depth);
+        print!(" ");
+        self.ident.unparse_to_code(depth);
+        if matches!(*self.declaration_type, AstTypeVariant::Array(_)) {
+            print!("[");
+            self.expr.unparse_to_code(depth);
+            print!("]");
+        } else {
+            print!(" = ");
+            self.expr.unparse_to_code(depth);
+        }
+        print!(";");
     }
 }
 
 impl GlobalVarDecl {
     pub fn new(
         source_position: SourcePosition,
-        t: Box<AstTypeVariant>,
-        i: Box<Ident>,
+        declaration_type: Box<AstTypeVariant>,
+        ident: Box<Ident>,
         expr: Box<ExprType>,
     ) -> Self {
         Self {
             source_position,
-            t,
-            i,
+            declaration_type,
+            ident,
             expr,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LocalVarDecl {
     source_position: SourcePosition,
     declaration_type: Box<AstTypeVariant>,
@@ -155,14 +198,14 @@ impl fmt::Display for LocalVarDecl {
     }
 }
 
-impl Ast for LocalVarDecl {
+impl Checking for LocalVarDecl {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting LocalVarDecl node.");
         // Implement visitLocalVarDecl function...
     }
 }
 
-impl PrintingVisit for LocalVarDecl {
+impl PrintAST for LocalVarDecl {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
@@ -170,6 +213,29 @@ impl PrintingVisit for LocalVarDecl {
         self.declaration_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
         self.expr.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for LocalVarDecl {
+    fn unparse_to_code(&self, depth: i32) {
+        print_newline_and_indent(depth);
+        self.declaration_type.unparse_to_code(depth);
+        print!(" ");
+        self.ident.unparse_to_code(depth);
+        if let AstTypeVariant::Array(curr_array) = &*self.declaration_type {
+            let expr: &ExprType = &curr_array.expression;
+            print!("[");
+            if !matches!(expr, ExprType::EmptyExpr(_)) {
+                curr_array.unparse_to_code(depth);
+            }
+            print!("]");
+        }
+
+        if !matches!(*self.expr, ExprType::EmptyExpr(_)) {
+            print!(" = ");
+            self.expr.unparse_to_code(depth);
+        }
+        print!(";");
     }
 }
 
@@ -189,14 +255,14 @@ impl LocalVarDecl {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ParaDecl {
     source_position: SourcePosition,
-    decl_type: Box<AstTypeVariant>,
+    declaration_type: Box<AstTypeVariant>,
     ident: Box<Ident>,
 }
 
-impl Ast for ParaDecl {
+impl Checking for ParaDecl {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting ParaDecl node.");
         // Implement visitParaDecl function...
@@ -208,18 +274,34 @@ impl fmt::Display for ParaDecl {
         write!(
             f,
             "{{ source_position: {:?}, t: {:?}, i: {:?} }}",
-            self.source_position, self.decl_type, self.ident
+            self.source_position, self.declaration_type, self.ident
         )
     }
 }
 
-impl PrintingVisit for ParaDecl {
+impl PrintAST for ParaDecl {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
-        self.decl_type.visit_for_printing(depth + 1);
+        self.declaration_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for ParaDecl {
+    fn unparse_to_code(&self, depth: i32) {
+        self.declaration_type.unparse_to_code(depth);
+        print!(" ");
+        self.ident.unparse_to_code(depth);
+        if let AstTypeVariant::Array(curr_array) = &*self.declaration_type {
+            let expr: &ExprType = &curr_array.expression;
+            print!("[");
+            if !matches!(expr, ExprType::EmptyExpr(_)) {
+                curr_array.unparse_to_code(depth);
+            }
+            print!("]");
+        }
     }
 }
 
@@ -227,7 +309,7 @@ impl ParaDecl {
     pub fn new(source_position: SourcePosition, decl_type: Box<AstTypeVariant>, ident: Box<Ident>) -> Self {
         Self {
             source_position,
-            decl_type,
+            declaration_type: decl_type,
             ident,
         }
     }

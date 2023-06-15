@@ -1,5 +1,3 @@
-// Parser consumes tokens, adds them to concrete syntax tree.
-// Visitor pattern creates abstract Syntax tree from concrete syntax tree.
 // Can visualise using https://crates.io/crates/graphviz-rust https://docs.rs/petgraph/latest/petgraph/ if needed.
 // Arc<Mutex<T>> or RC or RefCell for references.
 
@@ -76,13 +74,11 @@ pub fn generate_ast(parser_struct: &mut ParserData) -> Program {
 }
 
 fn parse_declaration_list(parser_struct: &mut ParserData, is_global: bool) -> ListType {
-    // TODO: Fix.  Not checking for globals properly.
-    // Used for non globals???
     let start = parser_struct.current_position;
 
     if token_is_primitive_type(&parser_struct.current_token.token_kind) {
         let func_type = parse_type(parser_struct);
-        let ident = parse_ident(parser_struct);
+        let ident = parse_identifier(parser_struct);
         if parser_struct.current_token.token_kind == TokenKind::LPAREN {
             parse_func_decl_list(Box::new(func_type), ident, is_global, parser_struct)
         } else {
@@ -292,20 +288,7 @@ fn parse_array_expr_list(parser_struct: &mut ParserData) -> ListType {
     }
 }
 
-fn parse_ident(parser_struct: &mut ParserData) -> Ident {
-    match parser_struct.current_token.token_kind {
-        TokenKind::ID => {
-            let identifier = Ident::new(
-                parser_struct.current_token.spelling.clone(),
-                parser_struct.current_token.token_position,
-                None,
-            );
-            match_and_consume_next_token(parser_struct);
-            identifier
-        }
-        _ => panic!("identifier expected here"),
-    }
-}
+// ======================================== Statements =============================================
 
 // compound-stmt -> "{" var-decl* stmt* "}"
 fn parse_compound_stmt(parser_struct: &mut ParserData) -> StmtType {
@@ -372,8 +355,6 @@ fn parse_single_stmt(parser_struct: &mut ParserData) -> StmtType {
         TokenKind::RETURN => parse_return_stmt(parser_struct),
         _ => {
             if EXPR_FIRST_SET.contains(&parser_struct.current_token.token_kind) {
-                println!("Current parser struct single stmt{:?}", parser_struct);
-
                 parse_expr_stmt(parser_struct)
             } else {
                 panic!("Invalid token kind for single statement");
@@ -507,8 +488,7 @@ fn parse_continue_stmt(parser_struct: &mut ParserData) -> StmtType {
 fn parse_return_stmt(parser_struct: &mut ParserData) -> StmtType {
     let start_pos = parser_struct.current_token.token_position;
 
-    // Consume TokenKind::RETURN
-    match_and_consume_next_token(parser_struct);
+    match_and_consume_next_token(parser_struct); // Consume TokenKind::RETURN
 
     if EXPR_FIRST_SET.contains(&parser_struct.current_token.token_kind) {
         let expr = Box::new(parse_expr(parser_struct));
@@ -530,12 +510,12 @@ fn parse_return_stmt(parser_struct: &mut ParserData) -> StmtType {
     StmtType::ReturnStmt(ReturnStmt::new(final_position, Box::new(empty_expr)))
 }
 
+// ====================================== Expressions ==============================================
+
 // expr-stmt -> expr? ";"
 fn parse_expr_stmt(parser_struct: &mut ParserData) -> StmtType {
     let mut start_pos = parser_struct.current_position;
     error!("Current parser struct {:?}", parser_struct);
-    println!("Current parser struct expr stmt{:?}", parser_struct);
-    println!("Expression first set {:?}", EXPR_FIRST_SET);
 
     match parser_struct.current_token.token_kind {
         kind if EXPR_FIRST_SET.contains(&kind) => {
@@ -638,9 +618,6 @@ fn parse_conditional_and_expression(parser_struct: &mut ParserData) -> ExprType 
 // cond-and-expr' -> "&&" equality-expr cond-and-expr' | epsilon
 fn parse_conditional_and_expression_tail(start_pos: &SourcePosition, first_expr: ExprType, parser_struct: &mut ParserData) -> ExprType {
     let mut and_expr_tail_pos = start_pos.clone();
-
-    error!("Current parser struct cond and {:?}", parser_struct);
-    println!("Current parser struct cond and{:?}", parser_struct);
 
     match parser_struct.current_token.token_kind {
         TokenKind::ANDAND => {
@@ -832,11 +809,10 @@ fn parse_unary_expression(parser_struct: &mut ParserData) -> ExprType {
 fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
     let start_pos = parser_struct.current_token.token_position;
     error!("Current parser struct parse primary {:?}", parser_struct);
-    println!("Current parser struct parser primary{:?}", parser_struct);
 
     match parser_struct.current_token.token_kind {
         TokenKind::ID => {
-            let lhs_ident = parse_ident(parser_struct);
+            let lhs_ident = parse_identifier(parser_struct);
             let sim_vast = VarUntyped::new(parser_struct.current_position.clone(), lhs_ident.copy_with_null_decl());
 
             match parser_struct.current_token.token_kind {
@@ -901,9 +877,10 @@ fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
     }
 }
 
+// =================================== Parameters and Arguments ====================================
+
 fn parse_parameter_list(parser_data: &mut ParserData) -> ListType {
     let start_pos = parser_data.current_token.token_position.clone();
-
     match_and_consume_next_token(parser_data); // Consume LPAREN
 
     if parser_data.current_token.token_kind != TokenKind::RPAREN {
@@ -944,7 +921,7 @@ fn parse_proper_parameter_list(parser_data: &mut ParserData) -> ListType {
 fn parse_parameter_declaration(parser_data: &mut ParserData) -> ParaDecl {
     let start_pos = parser_data.current_token.token_position;
     let param_type = parse_type(parser_data);
-    let ident = parse_ident(parser_data);
+    let ident = parse_identifier(parser_data);
 
     match parser_data.current_token.token_kind {
         TokenKind::LBRACKET => {
@@ -997,6 +974,8 @@ fn parse_arg(parser_data: &mut ParserData) -> Arg {
     let expr = parse_expr(parser_data);
     Arg::new(arg_position, Box::new(expr))
 }
+
+// ========================== Literal and Type Parsing ==========================
 
 fn parse_int_literal(parser_data: &mut ParserData) -> IntLiteral {
     match parser_data.current_token.token_kind {
@@ -1065,6 +1044,21 @@ fn parse_string_literal(parser_struct: &mut ParserData) -> ParserResult {
     }
 }
 
+fn parse_identifier(parser_struct: &mut ParserData) -> Ident {
+    match parser_struct.current_token.token_kind {
+        TokenKind::ID => {
+            let identifier = Ident::new(
+                parser_struct.current_token.spelling.clone(),
+                parser_struct.current_token.token_position,
+                None,
+            );
+            match_and_consume_next_token(parser_struct);
+            identifier
+        }
+        _ => panic!("identifier expected here"),
+    }
+}
+
 fn parse_type(parser_data: &mut ParserData) -> AstTypes {
     let type_position = parser_data.current_token.token_position.clone();
 
@@ -1108,10 +1102,8 @@ fn consume_operator(parser_struct: &mut ParserData) -> Operator {
         parser_struct.current_token.token_position.clone(),
         parser_struct.current_token.spelling.clone(),
     );
-
     parser_struct.current_token = parser_struct.scanner.get_next_token();
     parser_struct.current_position = parser_struct.current_token.token_position;
-
     operator
 }
 
@@ -1124,7 +1116,6 @@ fn finish_source_pos(
     end_source_position: &SourcePosition,
 ) -> SourcePosition {
     // Take the start of the initial and the end of the end and create a single source position.
-
     SourcePosition::new(
         init_source_position.line_start,
         end_source_position.line_finish,

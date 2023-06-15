@@ -1,16 +1,18 @@
 use std::fmt;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
-use crate::ast::{Ast, PrintingVisit};
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_tabbed_string, SourcePosition};
+use crate::utils::{generate_indent, generate_tabbed_string, SourcePosition};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Operator {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for Operator {
+impl Checking for Operator {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -27,11 +29,17 @@ impl fmt::Display for Operator {
     }
 }
 
-impl PrintingVisit for Operator {
+impl PrintAST for Operator {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for Operator {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling)
     }
 }
 
@@ -44,13 +52,13 @@ impl Operator {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Terminal {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for Terminal {
+impl Checking for Terminal {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -67,11 +75,17 @@ impl fmt::Display for Terminal {
     }
 }
 
-impl PrintingVisit for Terminal {
+impl PrintAST for Terminal {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for Terminal {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling);
     }
 }
 
@@ -84,13 +98,13 @@ impl Terminal {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IntLiteral {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for IntLiteral {
+impl Checking for IntLiteral {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -107,11 +121,17 @@ impl fmt::Display for IntLiteral {
     }
 }
 
-impl PrintingVisit for IntLiteral {
+impl PrintAST for IntLiteral {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for IntLiteral {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling);
     }
 }
 
@@ -124,13 +144,13 @@ impl IntLiteral {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FloatLiteral {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for FloatLiteral {
+impl Checking for FloatLiteral {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -147,11 +167,17 @@ impl fmt::Display for FloatLiteral {
     }
 }
 
-impl PrintingVisit for FloatLiteral {
+impl PrintAST for FloatLiteral {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for FloatLiteral {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling);
     }
 }
 
@@ -164,13 +190,13 @@ impl FloatLiteral {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BooleanLiteral {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for BooleanLiteral {
+impl Checking for BooleanLiteral {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -187,11 +213,17 @@ impl fmt::Display for BooleanLiteral {
     }
 }
 
-impl PrintingVisit for BooleanLiteral {
+impl PrintAST for BooleanLiteral {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for BooleanLiteral {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling);
     }
 }
 
@@ -204,13 +236,13 @@ impl BooleanLiteral {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StringLiteral {
     pub source_position: SourcePosition,
     pub spelling: String,
 }
 
-impl Ast for StringLiteral {
+impl Checking for StringLiteral {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -227,11 +259,17 @@ impl fmt::Display for StringLiteral {
     }
 }
 
-impl PrintingVisit for StringLiteral {
+impl PrintAST for StringLiteral {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+    }
+}
+
+impl PrintUnparsedAST for StringLiteral {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{}", self.spelling);
     }
 }
 

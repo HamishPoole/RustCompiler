@@ -9,7 +9,7 @@ use clap::{Arg, ArgAction, ArgMatches, Args, Command, FromArgMatches, Parser, Su
 use log::error;
 use regex::internal::Compiler;
 
-use vc::{test_parser, test_scanner};
+use vc::{parse_print_ast, parse_unparse, test_parser, test_scanner};
 use vc::parser::{parse_program, ParserData};
 use vc::scanner::Scanner;
 
@@ -19,9 +19,6 @@ use vc::scanner::Scanner;
 struct Cli {
     /// Filename to compile
     input_filepath: Option<String>,
-
-    /// Output filepath.
-    output_filepath: Option<String>,
 
     #[command(subcommand)]
     command: Commands,
@@ -34,6 +31,9 @@ enum Commands {
 
     /// Parses the input file and prints the AST produced.
     Parse,
+
+    /// Parses the input file, then unparses the AST and prints an identical result.
+    Unparse,
 }
 
 #[derive(Args)]
@@ -43,14 +43,16 @@ fn main() {
     let cli = Cli::parse();
 
     let input_filepath = cli.input_filepath.as_deref().unwrap();
-    let output_filepath = cli.output_filepath.as_deref().unwrap();
 
     match &cli.command {
         Commands::Scan => {
-            test_scanner(input_filepath, output_filepath);
+            test_scanner(input_filepath);
         }
-        Commands::Parse=> {
-            test_parser(input_filepath, output_filepath);
+        Commands::Parse => {
+            parse_print_ast(input_filepath);
+        }
+        Commands::Unparse => {
+            parse_unparse(input_filepath);
         }
     }
 

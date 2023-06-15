@@ -234,8 +234,7 @@ fn test_fib_whole_file() {
             .write_all(token_string.as_bytes())
             .expect("Expected to write to file.");
 
-        if curr_token.token_kind == TokenKind::EOF
-            || curr_token.token_kind == TokenKind::ERROR
+        if curr_token.token_kind == TokenKind::EOF || curr_token.token_kind == TokenKind::ERROR
         {
             break;
         }
@@ -243,8 +242,8 @@ fn test_fib_whole_file() {
 
     // Then, assert that the output file is the same as the solution file.
     let output = std::fs::read_to_string(output_filepath).expect("Unable to read output file");
-    let solution =
-        std::fs::read_to_string(solution_filepath).expect("Unable to read solution file");
+    let solution = std::fs::read_to_string(solution_filepath).expect("Unable to read solution file");
+
     assert_eq!(output, solution, "Output file differs from solution file");
 }
 

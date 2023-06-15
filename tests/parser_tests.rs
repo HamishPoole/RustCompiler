@@ -15,7 +15,6 @@ fn test_parser_fibonacci() {
     let output_filepath = "./tests/Parser/output/t57.vc";
     let solution_filepath = "./tests/Parser/solution/t57.sol";
 
-
     let mut my_scanner = Scanner::new(std::fs::read_to_string(input_filepath).expect("File reading error."));
 }
 
@@ -24,10 +23,5 @@ fn test_parser_defaults() {
     let input_filepath = "./defaults/test1.vc";
     let output_filepath = "./defaults/outfile1";
 
-
-    let result_ast = test_parser(input_filepath, output_filepath);
-
-
-    // TODO: have AST node print the parse tree.
-    // TODO:
+    let result_ast = test_parser(input_filepath);
 }

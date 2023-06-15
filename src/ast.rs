@@ -1,6 +1,8 @@
 use std::any::{Any, TypeId};
 use std::fmt;
 use std::fmt::{Debug, Display};
+use std::fs::File;
+use std::io::BufWriter;
 
 use crate::ast::array_type::ArrayType;
 use crate::ast::decl::{FuncDecl, GlobalVarDecl, LocalVarDecl, ParaDecl};
@@ -36,12 +38,16 @@ pub mod statement;
 pub mod variable;
 pub mod array_type;
 
-pub trait Ast: Debug + Display {
+pub trait Checking: Debug + Display {
     fn visit_for_semantics_checking(&self);
 }
 
-pub trait PrintingVisit {
+pub trait PrintAST {
     fn visit_for_printing(&self, depth: i32) {}
+}
+
+pub trait PrintUnparsedAST {
+    fn unparse_to_code(&self, depth: i32) {}
 }
 
 

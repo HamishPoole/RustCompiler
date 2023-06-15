@@ -5,7 +5,6 @@ use log::{debug, error, info, warn};
 use crate::globals::TAB_SIZE;
 use crate::scanner::scanner_handlers::handle_tokens;
 use crate::token::{Token, TokenKind};
-use crate::utils::print_string;
 use crate::utils::SourcePosition;
 
 pub mod scanner_handlers;

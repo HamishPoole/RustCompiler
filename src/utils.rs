@@ -5,13 +5,25 @@ use regex::Regex;
 use crate::globals::TAB_SIZE;
 use crate::token::TokenKind;
 
-pub fn print_string(s: &String) {
-    println!("{}", s);
-    for line in s.lines() {
-        println!("{}", line);
-    }
+pub mod unparser;
 
-    println!("{}", s.escape_default());
+pub fn generate_tabbed_string(s: &str, depth: i32) -> String {
+    let node_name = s.rsplit("::").next().unwrap();
+    let indent = generate_indent(depth);
+    indent + node_name
+}
+
+pub fn generate_indent(depth: i32) -> String {
+    " ".repeat((depth * TAB_SIZE) as usize)
+}
+
+pub fn print_newline_and_indent(depth: i32) {
+    println!("");
+    print!("{}", " ".repeat((depth * TAB_SIZE) as usize));
+}
+
+pub fn print_indent(depth: i32) {
+    print!("{}", " ".repeat((depth * TAB_SIZE) as usize));
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -36,6 +48,7 @@ impl SourcePosition {
 pub fn convert_test_format() {
     // assuming that each line of the message is stored in a vector
     // Use non IDE nvim to format.
+
     let gcd_solution = vec![
         r#"Kind = 7 [int], spelling = "int", position = 1(1)..1(3)"#,
         r#"Kind = 33 [<id>], spelling = "i", position = 1(5)..1(5)"#,
@@ -256,10 +269,4 @@ pub fn convert_test_format() {
             TokenKind::from_str(token_spelling).unwrap(), token_spelling, line_start, line_finish, char_start, char_end
         );
     }
-}
-
-pub fn generate_tabbed_string(s: &str, depth: i32) -> String {
-    let node_name = s.rsplit("::").next().unwrap();
-    let indent = " ".repeat((depth * TAB_SIZE) as usize);
-    indent + node_name
 }

@@ -4,7 +4,7 @@ use std::str::FromStr;
 use log::error;
 
 use crate::scanner::{
-    accept_next_character, get_current_char, get_next_char, skip_next_character, ScannerProductType,
+    accept_next_character, get_current_char, get_next_char, ScannerProductType, skip_next_character,
 };
 use crate::token::TokenKind;
 

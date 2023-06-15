@@ -1,12 +1,14 @@
 use std::fmt;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::sync::Arc;
 
-use crate::ast::{Ast, PrintingVisit};
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::ast::expression::ExprType;
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_tabbed_string, SourcePosition};
+use crate::utils::{generate_indent, generate_tabbed_string, SourcePosition};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AstTypes {
     BooleanType(BooleanType),
     FloatType(FloatType),
@@ -16,7 +18,7 @@ pub enum AstTypes {
     ErrorType(ErrorType),
 }
 
-impl PrintingVisit for AstTypes {
+impl PrintAST for AstTypes {
     fn visit_for_printing(&self, depth: i32) {
         match self {
             AstTypes::BooleanType(boolean_type) => boolean_type.visit_for_printing(depth),
@@ -25,6 +27,19 @@ impl PrintingVisit for AstTypes {
             AstTypes::StringType(string_type) => string_type.visit_for_printing(depth),
             AstTypes::VoidType(void_type) => void_type.visit_for_printing(depth),
             AstTypes::ErrorType(error_type) => error_type.visit_for_printing(depth),
+        }
+    }
+}
+
+impl PrintUnparsedAST for AstTypes {
+    fn unparse_to_code(&self, depth: i32) {
+        match self {
+            AstTypes::BooleanType(boolean_type) => boolean_type.unparse_to_code(depth),
+            AstTypes::FloatType(float_type) => float_type.unparse_to_code(depth),
+            AstTypes::IntType(int_type) => int_type.unparse_to_code(depth),
+            AstTypes::StringType(string_type) => string_type.unparse_to_code(depth),
+            AstTypes::VoidType(void_type) => void_type.unparse_to_code(depth),
+            AstTypes::ErrorType(error_type) => error_type.unparse_to_code(depth),
         }
     }
 }
@@ -41,12 +56,12 @@ impl AstTypes {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BooleanType {
     source_position: SourcePosition,
 }
 
-impl Ast for BooleanType {
+impl Checking for BooleanType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting BooleanType node.");
         // Implement visitBooleanType function...
@@ -59,11 +74,17 @@ impl fmt::Display for BooleanType {
     }
 }
 
-impl PrintingVisit for BooleanType {
+impl PrintAST for BooleanType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+    }
+}
+
+impl PrintUnparsedAST for BooleanType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("boolean")
     }
 }
 
@@ -73,12 +94,12 @@ impl BooleanType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ErrorType {
     source_position: SourcePosition,
 }
 
-impl Ast for ErrorType {
+impl Checking for ErrorType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting ErrorType node.");
         // Implement visitErrorType function...
@@ -91,7 +112,7 @@ impl fmt::Display for ErrorType {
     }
 }
 
-impl PrintingVisit for ErrorType {
+impl PrintAST for ErrorType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
@@ -99,12 +120,24 @@ impl PrintingVisit for ErrorType {
     }
 }
 
-#[derive(Clone, Debug)]
+impl PrintUnparsedAST for ErrorType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("error")
+    }
+}
+
+impl ErrorType {
+    pub fn new(source_position: SourcePosition) -> Self {
+        Self { source_position }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct FloatType {
     source_position: SourcePosition,
 }
 
-impl Ast for FloatType {
+impl Checking for FloatType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting FloatType node.");
         // Implement visitFloatType function...
@@ -117,11 +150,17 @@ impl fmt::Display for FloatType {
     }
 }
 
-impl PrintingVisit for FloatType {
+impl PrintAST for FloatType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+    }
+}
+
+impl PrintUnparsedAST for FloatType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("float");
     }
 }
 
@@ -136,7 +175,7 @@ pub struct IntType {
     source_position: SourcePosition,
 }
 
-impl Ast for IntType {
+impl Checking for IntType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntType node.");
         // Implement visitIntType function...
@@ -149,11 +188,17 @@ impl fmt::Display for IntType {
     }
 }
 
-impl PrintingVisit for IntType {
+impl PrintAST for IntType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+    }
+}
+
+impl PrintUnparsedAST for IntType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("int")
     }
 }
 
@@ -163,12 +208,12 @@ impl IntType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StringType {
     source_position: SourcePosition,
 }
 
-impl Ast for StringType {
+impl Checking for StringType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting StringType node.");
         // Implement visitStringType function...
@@ -181,11 +226,17 @@ impl fmt::Display for StringType {
     }
 }
 
-impl PrintingVisit for StringType {
+impl PrintAST for StringType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+    }
+}
+
+impl PrintUnparsedAST for StringType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("string")
     }
 }
 
@@ -195,12 +246,12 @@ impl StringType {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VoidType {
     source_position: SourcePosition,
 }
 
-impl Ast for VoidType {
+impl Checking for VoidType {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting VoidType node.");
         // Implement visitVoidType function...
@@ -213,11 +264,17 @@ impl fmt::Display for VoidType {
     }
 }
 
-impl PrintingVisit for VoidType {
+impl PrintAST for VoidType {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+    }
+}
+
+impl PrintUnparsedAST for VoidType {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("void")
     }
 }
 

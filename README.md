@@ -2,7 +2,7 @@
 <p align="center"> A fun little Rust compiler, exploring the Rust programming language & minimalist programming.
 WIP. 
 </p>
-<p align="center">Currently targets a subset of C called VC by Jingling Xue. 
+<p align="center">Currently targets a subset of C called VC, by Jingling Xue. 
 </p>
 <h2 align="center">Usage</h2>
 
@@ -32,5 +32,5 @@ git@github.com:HamishPoole/RustCompiler.git
 </div>
 
 ```
-vc %path_to_valid_input_file% %path_to_valid_output_file% parse
+vc path_to_valid_input_file parse
 ```

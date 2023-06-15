@@ -1,14 +1,16 @@
 use std::fmt;
+use std::fs::File;
+use std::io::{BufWriter, Write};
 
-use crate::ast::{Ast, PrintingVisit};
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::ast::ident::Ident;
-use crate::ast::list::ListType;
+use crate::ast::list::{EmptyArrayExprList, ListType};
 use crate::ast::literals::{BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral};
 use crate::ast::variable::VarUntyped;
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_tabbed_string, SourcePosition};
+use crate::utils::{generate_indent, generate_tabbed_string, print_newline_and_indent, SourcePosition};
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ExprType {
     Arg(Arg),
     ArrayExpr(ArrayExpr),
@@ -17,7 +19,7 @@ pub enum ExprType {
     BinaryExpr(BinaryExpr),
     BooleanExpr(BooleanExpr),
     CallExpr(CallExpr),
-    EmptyArrayExprList(crate::ast::list::EmptyArrayExprList),
+    EmptyArrayExprList(EmptyArrayExprList),
     EmptyExpr(EmptyExpr),
     FloatExpr(FloatExpr),
     IntExpr(IntExpr),
@@ -49,7 +51,7 @@ impl ExprType {
     }
 }
 
-impl PrintingVisit for ExprType {
+impl PrintAST for ExprType {
     fn visit_for_printing(&self, depth: i32) {
         match self {
             ExprType::Arg(expr) => expr.visit_for_printing(depth),
@@ -70,14 +72,35 @@ impl PrintingVisit for ExprType {
     }
 }
 
+impl PrintUnparsedAST for ExprType {
+    fn unparse_to_code(&self, depth: i32) {
+        match self {
+            ExprType::Arg(expr) => expr.unparse_to_code(depth),
+            ExprType::ArrayExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::ArrayInitExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::AssignExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::BinaryExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::BooleanExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::CallExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::EmptyArrayExprList(expr) => expr.unparse_to_code(depth),
+            ExprType::EmptyExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::FloatExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::IntExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::StringExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::UnaryExpr(expr) => expr.unparse_to_code(depth),
+            ExprType::VarExpr(expr) => expr.unparse_to_code(depth),
+        }
+    }
+}
 
-#[derive(Debug)]
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct Arg {
     pub source_position: SourcePosition,
     expr: Box<ExprType>,
 }
 
-impl Ast for Arg {
+impl Checking for Arg {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting Arg node.");
         todo!("Implement visitArg function in checker.rs")
@@ -94,12 +117,18 @@ impl std::fmt::Display for Arg {
     }
 }
 
-impl PrintingVisit for Arg {
+impl PrintAST for Arg {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for Arg {
+    fn unparse_to_code(&self, depth: i32) {
+        self.expr.unparse_to_code(depth);
     }
 }
 
@@ -109,14 +138,14 @@ impl Arg {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ArrayExpr {
     source_position: SourcePosition,
     var: VarUntyped,
     expr: Box<ExprType>,
 }
 
-impl Ast for ArrayExpr {
+impl Checking for ArrayExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting ArrayExpr node.");
         todo!("Implement visitArrayExpr function in checker.rs")
@@ -133,13 +162,22 @@ impl std::fmt::Display for ArrayExpr {
     }
 }
 
-impl PrintingVisit for ArrayExpr {
+impl PrintAST for ArrayExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.var.visit_for_printing(depth + 1);
         self.expr.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for ArrayExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.var.unparse_to_code(depth);
+        println!("[");
+        self.expr.unparse_to_code(depth);
+        println!("]");
     }
 }
 
@@ -153,14 +191,14 @@ impl ArrayExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct AssignExpr {
     source_position: SourcePosition,
     expression_one: Box<ExprType>,
     expression_two: Box<ExprType>,
 }
 
-impl Ast for AssignExpr {
+impl Checking for AssignExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting AssignExpr node.");
         todo!("Implement visitAssignExpr function in checker.rs")
@@ -177,13 +215,23 @@ impl std::fmt::Display for AssignExpr {
     }
 }
 
-impl PrintingVisit for AssignExpr {
+impl PrintAST for AssignExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expression_one.visit_for_printing(depth + 1);
         self.expression_two.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for AssignExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("(");
+        self.expression_one.unparse_to_code(depth);
+        print!(" = ");
+        self.expression_two.unparse_to_code(depth);
+        print!(")");
     }
 }
 
@@ -197,13 +245,13 @@ impl AssignExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ArrayInitExpr {
     source_position: SourcePosition,
     init_list: Box<ListType>, // Needs definition
 }
 
-impl Ast for ArrayInitExpr {
+impl Checking for ArrayInitExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting ArrayInitExpr node.");
         todo!("Implement visitArrayInitExpr function in checker.rs")
@@ -220,12 +268,20 @@ impl fmt::Display for ArrayInitExpr {
     }
 }
 
-impl PrintingVisit for ArrayInitExpr {
+impl PrintAST for ArrayInitExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.init_list.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for ArrayInitExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        print!("{{");
+        self.init_list.unparse_to_code(depth);
+        print!("}}");
     }
 }
 
@@ -238,8 +294,7 @@ impl ArrayInitExpr {
     }
 }
 
-
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BinaryExpr {
     source_position: SourcePosition,
     expression_one: Box<ExprType>,
@@ -247,7 +302,7 @@ pub struct BinaryExpr {
     expression_two: Box<ExprType>,
 }
 
-impl Ast for BinaryExpr {
+impl Checking for BinaryExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting BinaryExpr node.");
         todo!("Implement visitBinaryExpr function in checker.rs")
@@ -264,7 +319,7 @@ impl fmt::Display for BinaryExpr {
     }
 }
 
-impl PrintingVisit for BinaryExpr {
+impl PrintAST for BinaryExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
@@ -272,6 +327,18 @@ impl PrintingVisit for BinaryExpr {
         self.expression_one.visit_for_printing(depth + 1);
         self.operator.visit_for_printing(depth + 1);
         self.expression_two.visit_for_printing(depth + 1);
+    }
+}
+
+
+impl PrintUnparsedAST for BinaryExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.expression_one.unparse_to_code(depth);
+        print!(" ");
+        self.operator.unparse_to_code(depth);
+        print!(" ");
+        self.expression_two.unparse_to_code(depth);
+        print!(")");
     }
 }
 
@@ -291,13 +358,13 @@ impl BinaryExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BooleanExpr {
     source_position: SourcePosition,
     boolean_literal: BooleanLiteral, // Assuming FloatLiteral struct is defined
 }
 
-impl Ast for BooleanExpr {
+impl Checking for BooleanExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting BooleanExpr node.");
         todo!("Implement visitBooleanExpr function in checker.rs")
@@ -314,12 +381,18 @@ impl fmt::Display for BooleanExpr {
     }
 }
 
-impl PrintingVisit for BooleanExpr {
+impl PrintAST for BooleanExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.boolean_literal.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for BooleanExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.boolean_literal.unparse_to_code(depth);
     }
 }
 
@@ -332,14 +405,14 @@ impl BooleanExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CallExpr {
     source_position: SourcePosition,
     ident: Ident,
     argument_list: Box<ListType>,
 }
 
-impl Ast for CallExpr {
+impl Checking for CallExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting CallExpr node.");
         todo!("Implement visitCallExpr function in checker.rs")
@@ -356,14 +429,22 @@ impl std::fmt::Display for CallExpr {
     }
 }
 
-
-impl PrintingVisit for CallExpr {
+impl PrintAST for CallExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.ident.visit_for_printing(depth + 1);
         self.argument_list.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for CallExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.ident.unparse_to_code(depth);
+        print!("(");
+        self.argument_list.unparse_to_code(depth);
+        print!(")");
     }
 }
 
@@ -377,12 +458,12 @@ impl CallExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EmptyExpr {
     source_position: SourcePosition,
 }
 
-impl Ast for EmptyExpr {
+impl Checking for EmptyExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting EmptyExpr node.");
         todo!("Implement visitEmptyExpr function in checker.rs")
@@ -395,12 +476,16 @@ impl fmt::Display for EmptyExpr {
     }
 }
 
-impl PrintingVisit for EmptyExpr {
+impl PrintAST for EmptyExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
+}
+
+impl PrintUnparsedAST for EmptyExpr {
+    fn unparse_to_code(&self, depth: i32) {}
 }
 
 impl EmptyExpr {
@@ -409,14 +494,13 @@ impl EmptyExpr {
     }
 }
 
-
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FloatExpr {
     source_position: SourcePosition,
     float_literal: FloatLiteral, // Assuming FloatLiteral struct is defined
 }
 
-impl Ast for FloatExpr {
+impl Checking for FloatExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting FloatExpr node.");
         todo!("Implement visitFloatExpr function in checker.rs")
@@ -433,12 +517,18 @@ impl fmt::Display for FloatExpr {
     }
 }
 
-impl PrintingVisit for FloatExpr {
+impl PrintAST for FloatExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.float_literal.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for FloatExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.float_literal.unparse_to_code(depth);
     }
 }
 
@@ -451,14 +541,13 @@ impl FloatExpr {
     }
 }
 
-
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IntExpr {
     source_position: SourcePosition,
     int_literal: IntLiteral, // Assuming FloatLiteral struct is defined
 }
 
-impl Ast for IntExpr {
+impl Checking for IntExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting IntExpr node.");
         todo!("Implement visitIntExpr function in checker.rs")
@@ -467,20 +556,22 @@ impl Ast for IntExpr {
 
 impl fmt::Display for IntExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{{ source_position: {:?}, fl: {:?} }}",
-            self.source_position, self.int_literal
-        )
+        write!(f, "{{ source_position: {:?}, fl: {:?} }}", self.source_position, self.int_literal)
     }
 }
 
-impl PrintingVisit for IntExpr {
+impl PrintAST for IntExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.int_literal.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for IntExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.int_literal.unparse_to_code(depth);
     }
 }
 
@@ -493,13 +584,13 @@ impl IntExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct StringExpr {
     source_position: SourcePosition,
     string_literal: Box<StringLiteral>, // Assuming FloatLiteral struct is defined
 }
 
-impl Ast for StringExpr {
+impl Checking for StringExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting StringExpr node.");
         todo!("Implement visitStringExpr function in checker.rs")
@@ -516,12 +607,18 @@ impl fmt::Display for StringExpr {
     }
 }
 
-impl PrintingVisit for StringExpr {
+impl PrintAST for StringExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.string_literal.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for StringExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.string_literal.unparse_to_code(depth);
     }
 }
 
@@ -534,14 +631,14 @@ impl StringExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UnaryExpr {
     pub(crate) source_position: SourcePosition,
     operator: Operator,
     expression: Box<ExprType>,
 }
 
-impl Ast for UnaryExpr {
+impl Checking for UnaryExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting UnaryExpr node.");
         todo!("Implement visitUnaryExpr function in checker.rs")
@@ -558,13 +655,20 @@ impl std::fmt::Display for UnaryExpr {
     }
 }
 
-impl PrintingVisit for UnaryExpr {
+impl PrintAST for UnaryExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.operator.visit_for_printing(depth + 1);
         self.expression.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for UnaryExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.operator.unparse_to_code(depth);
+        self.expression.unparse_to_code(depth);
     }
 }
 
@@ -578,13 +682,13 @@ impl UnaryExpr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VarExpr {
     source_position: SourcePosition,
     var: VarUntyped,
 }
 
-impl Ast for VarExpr {
+impl Checking for VarExpr {
     fn visit_for_semantics_checking(&self) {
         println!("Visiting VarExpr node.");
         todo!("Implement visitVarExpr function in checker.rs")
@@ -593,20 +697,23 @@ impl Ast for VarExpr {
 
 impl fmt::Display for VarExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{{ source_position: {:?}, v: {:?} }}",
-            self.source_position, self.var
+        write!(f, "{{ source_position: {:?}, v: {:?} }}", self.source_position, self.var
         )
     }
 }
 
-impl PrintingVisit for VarExpr {
+impl PrintAST for VarExpr {
     fn visit_for_printing(&self, depth: i32) {
         let tabbed_string = generate_tabbed_string(
             std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.var.visit_for_printing(depth + 1);
+    }
+}
+
+impl PrintUnparsedAST for VarExpr {
+    fn unparse_to_code(&self, depth: i32) {
+        self.var.unparse_to_code(depth);
     }
 }
 
