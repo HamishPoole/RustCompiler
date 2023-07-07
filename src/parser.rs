@@ -8,19 +8,28 @@ use log::{debug, error};
 use once_cell::sync::Lazy;
 
 use crate::ast::array_type::{ArrayType, AstTypeVariant};
-use crate::ast::AstNode;
 use crate::ast::decl::{DeclType, FuncDecl, GlobalVarDecl, LocalVarDecl, ParaDecl};
-use crate::ast::expression::{Arg, ArrayExpr, ArrayInitExpr, AssignExpr, BinaryExpr, BooleanExpr, CallExpr, EmptyExpr, ExprType, FloatExpr, IntExpr, StringExpr, UnaryExpr, VarExpr};
+use crate::ast::expression::{
+    Arg, ArrayExpr, ArrayInitExpr, AssignExpr, BinaryExpr, BooleanExpr, CallExpr, EmptyExpr,
+    ExprType, FloatExpr, IntExpr, StringExpr, UnaryExpr, VarExpr,
+};
 use crate::ast::ident::Ident;
-use crate::ast::list::{ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ListType, ParamList};
+use crate::ast::list::{
+    ArgList, ArrayExprList, DeclList, EmptyArgList, EmptyArrayExprList, EmptyParamList, ListType,
+    ParamList,
+};
 use crate::ast::list::{EmptyDeclList, EmptyStmtList, StmtList};
 use crate::ast::literals::{BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral};
 use crate::ast::primitive_types::{
     AstTypes, BooleanType, FloatType, IntType, StringType, VoidType,
 };
 use crate::ast::program::Program;
-use crate::ast::statement::{BreakStmt, CompoundStmt, ContinueStmt, EmptyStmt, ExprStmt, ForStmt, IfStmt, ReturnStmt, StmtType, WhileStmt};
+use crate::ast::statement::{
+    BreakStmt, CompoundStmt, ContinueStmt, EmptyStmt, ExprStmt, ForStmt, IfStmt, ReturnStmt,
+    StmtType, WhileStmt,
+};
 use crate::ast::variable::VarUntyped;
+use crate::ast::AstNode;
 use crate::scanner::Scanner;
 use crate::token::{Token, TokenKind};
 use crate::utils::SourcePosition;
@@ -45,7 +54,6 @@ pub struct ParserData {
 impl ParserData {
     pub fn new(mut scanner: Scanner) -> Self {
         let current_token = scanner.get_next_token();
-        error!("Current token on instantiating parser: {:?}", current_token);
 
         Self {
             scanner,
@@ -55,20 +63,17 @@ impl ParserData {
     }
 }
 
-pub fn parse_program(scanner: Scanner) -> Program {
+pub fn parse_code(scanner: Scanner) -> Program {
     let mut parser_data = ParserData::new(scanner);
-    error!("Finished instantiating parser data");
 
-    generate_ast(&mut parser_data)
+    parse_program(&mut parser_data)
 }
 
-pub fn generate_ast(parser_struct: &mut ParserData) -> Program {
+pub fn parse_program(parser_struct: &mut ParserData) -> Program {
     let declaration_list = parse_declaration_list(parser_struct, true);
 
     match declaration_list {
-        ListType::DeclList(decl_list) => {
-            Program::new(decl_list)
-        }
+        ListType::DeclList(decl_list) => Program::new(decl_list),
         _ => panic!("Error: Expected declaration list."),
     }
 }
@@ -77,20 +82,25 @@ fn parse_declaration_list(parser_struct: &mut ParserData, is_global: bool) -> Li
     let start = parser_struct.current_position;
 
     if token_is_primitive_type(&parser_struct.current_token.token_kind) {
-        let func_type = parse_type(parser_struct);
+        let curr_type = parse_type(parser_struct);
         let ident = parse_identifier(parser_struct);
         if parser_struct.current_token.token_kind == TokenKind::LPAREN {
-            parse_func_decl_list(Box::new(func_type), ident, is_global, parser_struct)
+            parse_func_decl_list(Box::new(curr_type), ident, is_global, parser_struct)
         } else {
-            parse_initial_declaration_list(parser_struct, Box::new(func_type), Box::new(ident), is_global)
+            parse_initial_declaration_list(
+                parser_struct,
+                Box::new(curr_type),
+                Box::new(ident),
+                is_global,
+            )
         }
     } else {
         ListType::EmptyDeclList(EmptyDeclList::new(start))
     }
 }
 
-// func-decl           -> identifier para-list compound-stmt
-// var-decl          -> init-declarator-list ";"
+// func-decl -> identifier para-list compound-stmt
+// var-decl -> init-declarator-list ";"
 fn parse_func_decl_list(
     function_type: Box<AstTypes>,
     ident: Ident,
@@ -99,15 +109,21 @@ fn parse_func_decl_list(
 ) -> ListType {
     let start_pos = parser_struct.current_position;
 
-    let lhs_child = Box::new(DeclType::FuncDecl(parse_func_decl(function_type.clone(), ident.copy_with_null_decl(), parser_struct)));
+    let lhs_child = Box::new(DeclType::FuncDecl(parse_func_decl(
+        function_type.clone(),
+        ident.copy_with_null_decl(),
+        parser_struct,
+    )));
 
     let rhs_child = if parser_struct.current_token.token_kind != TokenKind::EOF {
-        Box::new(parse_func_decl_list(function_type, ident, is_global, parser_struct))
+        Box::new(parse_declaration_list(parser_struct, is_global))
     } else {
-        Box::new(ListType::EmptyDeclList(EmptyDeclList::new(parser_struct.current_position)))
+        Box::new(ListType::EmptyDeclList(EmptyDeclList::new(
+            parser_struct.current_position,
+        )))
     };
 
-    let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_pos = finish_position(&start_pos, &parser_struct.current_position);
     ListType::DeclList(DeclList::new(final_pos, lhs_child, rhs_child))
 }
 
@@ -122,7 +138,7 @@ fn parse_func_decl(
     let function_parameter_list_ast = parse_parameter_list(parser_struct);
     let compound_stmt_ast = parse_compound_stmt(parser_struct);
 
-    let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_pos = finish_position(&start_pos, &parser_struct.current_position);
 
     FuncDecl::new(
         final_pos,
@@ -146,29 +162,38 @@ fn parse_initial_declaration_list(
     let ident_source_pos = (*identifier).source_position;
     let ident_clone = Box::new(Ident::new(ident_spelling, ident_source_pos, None));
 
-    let lhs_child = parse_initial_declarator(parser_struct, decl_type.clone(), ident_clone, is_global);
+    let lhs_child =
+        parse_initial_declarator(parser_struct, decl_type.clone(), ident_clone, is_global);
     let mut rhs_child = ListType::EmptyDeclList(EmptyDeclList::new(parser_struct.current_position));
 
     if parser_struct.current_token.token_kind == TokenKind::COMMA {
         // Array initialisation expression.
+        match_and_consume_next_token(parser_struct); // COMMA
 
-        match_and_consume_next_token(parser_struct);  // COMMA
+        let rhs_child =
+            parse_initial_declaration_list(parser_struct, decl_type, identifier, is_global);
+        let final_pos = finish_position(&start_pos, &parser_struct.current_position);
 
-        let rhs_child = parse_initial_declaration_list(parser_struct, decl_type, identifier, is_global);
-        let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
-
-        return ListType::DeclList(DeclList::new(final_pos, Box::new(lhs_child), Box::new(rhs_child)));
+        return ListType::DeclList(DeclList::new(
+            final_pos,
+            Box::new(lhs_child),
+            Box::new(rhs_child),
+        ));
     }
 
-    match_and_consume_next_token(parser_struct);  // SEMICOLON
+    match_and_consume_next_token(parser_struct); // SEMICOLON.
 
     if token_is_primitive_type(&parser_struct.current_token.token_kind) {
         rhs_child = parse_declaration_list(parser_struct, is_global);
     }
 
-    let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_pos = finish_position(&start_pos, &parser_struct.current_position);
 
-    ListType::DeclList(DeclList::new(final_pos, Box::new(lhs_child), Box::new(rhs_child)))
+    ListType::DeclList(DeclList::new(
+        final_pos,
+        Box::new(lhs_child),
+        Box::new(rhs_child),
+    ))
 }
 
 // init-declarator -> declarator ( "=" initializer )?
@@ -179,36 +204,30 @@ fn parse_initial_declarator(
     is_global: bool,
 ) -> DeclType {
     let start_pos = parser_struct.current_position;
-
     let var_type = parse_declarator(parser_struct, decl_type);
-
     let mut init_expr = ExprType::EmptyExpr(EmptyExpr::new(parser_struct.current_position));
 
     if parser_struct.current_token.token_kind == TokenKind::EQ {
-        match_and_consume_next_token(parser_struct);  // EQ
+        match_and_consume_next_token(parser_struct); // EQ
         init_expr = parse_initialiser(parser_struct);
     }
 
-    let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
 
     if is_global {
-        DeclType::GlobalVarDecl(
-            GlobalVarDecl::new(
-                final_source_pos,
-                Box::new(var_type),
-                identifier,
-                Box::new(init_expr),
-            )
-        )
+        DeclType::GlobalVarDecl(GlobalVarDecl::new(
+            final_source_pos,
+            Box::new(var_type),
+            identifier,
+            Box::new(init_expr),
+        ))
     } else {
-        DeclType::LocalVarDecl(
-            LocalVarDecl::new(
-                final_source_pos,
-                Box::new(var_type),
-                identifier,
-                Box::new(init_expr),
-            )
-        )
+        DeclType::LocalVarDecl(LocalVarDecl::new(
+            final_source_pos,
+            Box::new(var_type),
+            identifier,
+            Box::new(init_expr),
+        ))
     }
 }
 
@@ -219,14 +238,19 @@ fn parse_declarator(parser_struct: &mut ParserData, decl_type: Box<AstTypes>) ->
 
     match parser_struct.current_token.token_kind {
         TokenKind::LBRACKET => {
-            match_and_consume_next_token(parser_struct);  // LBRACKET
+            match_and_consume_next_token(parser_struct); // LBRACKET
+            let expression = parse_array_type_expr(parser_struct);
+            match_and_consume_next_token(parser_struct); // RBRACKET
+            let final_position =
+                finish_position(&start_pos, &parser_struct.current_token.token_position);
 
-            match_and_consume_next_token(parser_struct);  // RBRACKET
-            let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_token.token_position);
-
-            AstTypeVariant::Array(ArrayType::new(final_source_pos, Arc::new(decl_type), parse_array_type_expr(parser_struct)))
+            AstTypeVariant::Array(ArrayType::new(
+                final_position,
+                Arc::new(decl_type),
+                expression,
+            ))
         }
-        _ => AstTypeVariant::Primitive(*decl_type)
+        _ => AstTypeVariant::Primitive(*decl_type),
     }
 }
 
@@ -234,13 +258,10 @@ fn parse_array_type_expr(parser_struct: &mut ParserData) -> ExprType {
     let start_pos = parser_struct.current_position;
 
     match parser_struct.current_token.token_kind {
-        TokenKind::INTLITERAL => {
-            parse_expr(parser_struct)
-        }
-        _ => ExprType::EmptyExpr(EmptyExpr::new(start_pos))
+        TokenKind::INTLITERAL => parse_expr(parser_struct),
+        _ => ExprType::EmptyExpr(EmptyExpr::new(start_pos)),
     }
 }
-
 
 // initialiser -> expr
 // | "{" expr ( "," expr )* "}"
@@ -251,7 +272,7 @@ fn parse_initialiser(parser_struct: &mut ParserData) -> ExprType {
         TokenKind::LBRACE => {
             match_and_consume_next_token(parser_struct); // Consume LBRACE.
             let array_expr_list = parse_array_expr_list(parser_struct);
-            let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
             ExprType::ArrayInitExpr(ArrayInitExpr::new(finish_pos, Box::new(array_expr_list)))
         }
         _ => parse_expr(parser_struct),
@@ -267,7 +288,7 @@ fn parse_array_expr_list(parser_struct: &mut ParserData) -> ListType {
         TokenKind::COMMA => {
             match_and_consume_next_token(parser_struct); // Consume COMMA.
             let rhs_array_expr = parse_array_expr_list(parser_struct);
-            let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
 
             ListType::ArrayExprList(ArrayExprList::new(
                 finish_pos,
@@ -276,7 +297,8 @@ fn parse_array_expr_list(parser_struct: &mut ParserData) -> ListType {
             ))
         }
         _ => {
-            let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
+            match_and_consume_next_token(parser_struct); // Consume RBRACE.
             ListType::ArrayExprList(ArrayExprList::new(
                 finish_pos,
                 lhs_expr,
@@ -293,9 +315,7 @@ fn parse_array_expr_list(parser_struct: &mut ParserData) -> ListType {
 // compound-stmt -> "{" var-decl* stmt* "}"
 fn parse_compound_stmt(parser_struct: &mut ParserData) -> StmtType {
     let start_pos = parser_struct.current_position;
-
     match_and_consume_next_token(parser_struct); // Consumes LBRACE.
-
     let mut declare_list = ListType::EmptyDeclList(EmptyDeclList::new(start_pos));
 
     if token_is_primitive_type(&parser_struct.current_token.token_kind) {
@@ -303,11 +323,9 @@ fn parse_compound_stmt(parser_struct: &mut ParserData) -> StmtType {
     }
 
     let stmt_list_ast = parse_stmt_list(parser_struct);
-
     // Consumers RCURLY
     match_and_consume_next_token(parser_struct);
-
-    let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
 
     StmtType::CompoundStmt(CompoundStmt::new(
         Box::new(declare_list),
@@ -325,7 +343,7 @@ fn parse_stmt_list(parser_struct: &mut ParserData) -> ListType {
     }
 
     let lhs_single_stmt = parse_single_stmt(parser_struct);
-    let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position.clone());
+    let final_source_pos = finish_position(&start_pos, &parser_struct.current_position.clone());
 
     let rhs = StmtList::new(
         final_source_pos,
@@ -357,7 +375,10 @@ fn parse_single_stmt(parser_struct: &mut ParserData) -> StmtType {
             if EXPR_FIRST_SET.contains(&parser_struct.current_token.token_kind) {
                 parse_expr_stmt(parser_struct)
             } else {
-                panic!("Invalid token kind for single statement");
+                panic!(
+                    "Invalid token kind for single statement: {:?}, at position: {:?}",
+                    parser_struct.current_token.token_kind, parser_struct.current_position
+                );
             }
         }
     }
@@ -384,7 +405,7 @@ fn parse_if_statement(parser_struct: &mut ParserData) -> StmtType {
     let if_stmt = parse_single_or_multiple_statements(parser_struct);
 
     if parser_struct.current_token.token_kind != TokenKind::ELSE {
-        let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+        let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
         return StmtType::IfStmt(IfStmt::new(
             final_source_pos,
             Box::new(if_expr),
@@ -395,7 +416,7 @@ fn parse_if_statement(parser_struct: &mut ParserData) -> StmtType {
 
     match_and_consume_next_token(parser_struct); // Consume TokenKind::ELSE
     let else_stmt = parse_single_or_multiple_statements(parser_struct);
-    let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
     StmtType::IfStmt(IfStmt::new(
         final_source_pos,
         Box::new(if_expr),
@@ -423,8 +444,7 @@ fn parse_for_statement(parser_struct: &mut ParserData) -> StmtType {
     }
     match_and_consume_next_token(parser_struct); // Consume TokenKind::RPAREN
 
-
-    let final_source_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+    let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
 
     StmtType::ForStmt(ForStmt::new(
         final_source_pos,
@@ -448,7 +468,7 @@ fn parse_while_stmt(parser_struct: &mut ParserData) -> StmtType {
 
     let while_stmt = parse_single_or_multiple_statements(parser_struct);
 
-    let final_position = finish_source_pos(
+    let final_position = finish_position(
         &start_pos,
         &parser_struct.current_token.token_position.clone(),
     );
@@ -467,7 +487,7 @@ fn parse_break_stmt(parser_struct: &mut ParserData) -> StmtType {
     match_and_consume_next_token(parser_struct); // Consume TokenKind::BREAK
     match_and_consume_next_token(parser_struct); // Consume TokenKind::SEMICOLON
 
-    let final_position = finish_source_pos(
+    let final_position = finish_position(
         &start_pos,
         &parser_struct.current_token.token_position.clone(),
     );
@@ -492,7 +512,7 @@ fn parse_return_stmt(parser_struct: &mut ParserData) -> StmtType {
 
     if EXPR_FIRST_SET.contains(&parser_struct.current_token.token_kind) {
         let expr = Box::new(parse_expr(parser_struct));
-        let final_position = finish_source_pos(
+        let final_position = finish_position(
             &start_pos,
             &parser_struct.current_token.token_position.clone(),
         );
@@ -501,7 +521,7 @@ fn parse_return_stmt(parser_struct: &mut ParserData) -> StmtType {
 
     // Consume TokenKind::SEMICOLON
     match_and_consume_next_token(parser_struct);
-    let final_position = finish_source_pos(
+    let final_position = finish_position(
         &start_pos,
         &parser_struct.current_token.token_position.clone(),
     );
@@ -514,23 +534,20 @@ fn parse_return_stmt(parser_struct: &mut ParserData) -> StmtType {
 
 // expr-stmt -> expr? ";"
 fn parse_expr_stmt(parser_struct: &mut ParserData) -> StmtType {
+    // Doesn't consume )
     let mut start_pos = parser_struct.current_position;
-    error!("Current parser struct {:?}", parser_struct);
 
     match parser_struct.current_token.token_kind {
         kind if EXPR_FIRST_SET.contains(&kind) => {
             let expr_ast = parse_expr(parser_struct);
-            match_and_consume_next_token(parser_struct);  // Consume TokenKind::SEMICOLON
-            let final_source_pos = finish_source_pos(
-                &start_pos,
-                &parser_struct.current_position,
-            );
+            match_and_consume_next_token(parser_struct); // Consume TokenKind::SEMICOLON
+            let final_source_pos = finish_position(&start_pos, &parser_struct.current_position);
             let expr_stmt = ExprStmt::new(final_source_pos, expr_ast);
             StmtType::ExprStmt(expr_stmt)
         }
         TokenKind::SEMICOLON => {
             match_and_consume_next_token(parser_struct);
-            let final_source_pos = finish_source_pos(
+            let final_source_pos = finish_position(
                 &start_pos,
                 &parser_struct.current_token.token_position.clone(),
             );
@@ -562,7 +579,7 @@ fn parse_assign_expr(parser_struct: &mut ParserData) -> ExprType {
             let eq = consume_operator(parser_struct);
             let rhs = parse_assign_expr(parser_struct);
             let assign_expr = AssignExpr::new(
-                finish_source_pos(&assign_expr_pos, &rhs.get_source_position()),
+                finish_position(&assign_expr_pos, &rhs.get_source_position()),
                 Box::new(lhs_expr),
                 Box::new(rhs),
             );
@@ -592,7 +609,7 @@ fn parse_conditional_or_expression_tail(
             let or = consume_operator(parser_struct);
             let second_expr = parse_conditional_and_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &second_expr.get_source_position()),
+                finish_position(start_pos, &second_expr.get_source_position()),
                 Box::new(first_expr),
                 or,
                 Box::new(second_expr),
@@ -611,12 +628,15 @@ fn parse_conditional_or_expression_tail(
 fn parse_conditional_and_expression(parser_struct: &mut ParserData) -> ExprType {
     let mut cond_and_expr_pos = parser_struct.current_token.token_position.clone();
     let mut main_expr = parse_equality_expression(parser_struct);
-    main_expr = parse_conditional_and_expression_tail(&cond_and_expr_pos, main_expr, parser_struct);
-    main_expr
+    parse_conditional_and_expression_tail(&cond_and_expr_pos, main_expr, parser_struct)
 }
 
 // cond-and-expr' -> "&&" equality-expr cond-and-expr' | epsilon
-fn parse_conditional_and_expression_tail(start_pos: &SourcePosition, first_expr: ExprType, parser_struct: &mut ParserData) -> ExprType {
+fn parse_conditional_and_expression_tail(
+    start_pos: &SourcePosition,
+    first_expr: ExprType,
+    parser_struct: &mut ParserData,
+) -> ExprType {
     let mut and_expr_tail_pos = start_pos.clone();
 
     match parser_struct.current_token.token_kind {
@@ -624,7 +644,7 @@ fn parse_conditional_and_expression_tail(start_pos: &SourcePosition, first_expr:
             let and = consume_operator(parser_struct);
             let second_expr = parse_equality_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &second_expr.get_source_position()),
+                finish_position(start_pos, &second_expr.get_source_position()),
                 Box::new(first_expr),
                 and,
                 Box::new(second_expr),
@@ -643,8 +663,7 @@ fn parse_conditional_and_expression_tail(start_pos: &SourcePosition, first_expr:
 fn parse_equality_expression(parser_struct: &mut ParserData) -> ExprType {
     let mut equality_expr_pos = parser_struct.current_token.token_position.clone();
     let mut lhs_expr = parse_relational_expression(parser_struct);
-    lhs_expr = parse_equality_expression_tail(&equality_expr_pos, lhs_expr, parser_struct);
-    lhs_expr
+    parse_equality_expression_tail(&equality_expr_pos, lhs_expr, parser_struct)
 }
 
 // equality-expr' -> "==" rel-expr equality-expr'
@@ -661,7 +680,7 @@ fn parse_equality_expression_tail(
             let op = consume_operator(parser_struct);
             let rhs_expr = parse_relational_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &rhs_expr.get_source_position()),
+                finish_position(start_pos, &rhs_expr.get_source_position()),
                 Box::new(lhs_expr),
                 op,
                 Box::new(rhs_expr),
@@ -680,8 +699,7 @@ fn parse_equality_expression_tail(
 fn parse_relational_expression(parser_struct: &mut ParserData) -> ExprType {
     let mut rel_expr_pos = parser_struct.current_token.token_position.clone();
     let lhs_expr = parse_additive_expression(parser_struct);
-    let rel_expr = parse_relational_expression_tail(&rel_expr_pos, lhs_expr, parser_struct);
-    rel_expr
+    parse_relational_expression_tail(&rel_expr_pos, lhs_expr, parser_struct)
 }
 
 // rel-expr' -> "<" additive-expr rel-expr'
@@ -700,7 +718,7 @@ fn parse_relational_expression_tail(
             let op = consume_operator(parser_struct);
             let rhs_expr = parse_additive_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &rhs_expr.get_source_position()),
+                finish_position(start_pos, &rhs_expr.get_source_position()),
                 Box::new(lhs_expr),
                 op,
                 Box::new(rhs_expr),
@@ -715,8 +733,7 @@ fn parse_relational_expression_tail(
 fn parse_additive_expression(parser_struct: &mut ParserData) -> ExprType {
     let mut pos = parser_struct.current_token.token_position.clone();
     let lhs_expr = parse_multiplicative_expression(parser_struct);
-    let main_expr = parse_additive_expression_tail(&pos, lhs_expr, parser_struct);
-    main_expr
+    parse_additive_expression_tail(&pos, lhs_expr, parser_struct)
 }
 
 // additive-expr'      | "+" multiplicative-expr additive-expr'
@@ -733,7 +750,7 @@ fn parse_additive_expression_tail(
             let op = consume_operator(parser_struct);
             let rhs_expr = parse_multiplicative_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &rhs_expr.get_source_position()),
+                finish_position(start_pos, &rhs_expr.get_source_position()),
                 Box::new(lhs_expr),
                 op,
                 Box::new(rhs_expr),
@@ -748,8 +765,7 @@ fn parse_additive_expression_tail(
 fn parse_multiplicative_expression(parser_struct: &mut ParserData) -> ExprType {
     let mut start_pos = parser_struct.current_token.token_position;
     let lhs_expr = parse_unary_expression(parser_struct);
-    let main_expr = parse_multiplicative_expression_tail(&start_pos, lhs_expr, parser_struct);
-    main_expr
+    parse_multiplicative_expression_tail(&start_pos, lhs_expr, parser_struct)
 }
 
 // multiplicative-expr'-> "*" unary-expr multiplicative-expr'
@@ -766,7 +782,7 @@ fn parse_multiplicative_expression_tail(
             let op = consume_operator(parser_struct);
             let rhs_expr = parse_unary_expression(parser_struct);
             let binary_expr = BinaryExpr::new(
-                finish_source_pos(start_pos, &rhs_expr.get_source_position()),
+                finish_position(start_pos, &rhs_expr.get_source_position()),
                 Box::new(lhs_expr),
                 op,
                 Box::new(rhs_expr),
@@ -788,7 +804,7 @@ fn parse_unary_expression(parser_struct: &mut ParserData) -> ExprType {
             let op = consume_operator(parser_struct);
             let lhs_expr = parse_unary_expression(parser_struct);
             let unary = UnaryExpr::new(
-                finish_source_pos(&start_pos, &lhs_expr.get_source_position()),
+                finish_position(&start_pos, &lhs_expr.get_source_position()),
                 op,
                 Box::new(lhs_expr),
             );
@@ -808,30 +824,32 @@ fn parse_unary_expression(parser_struct: &mut ParserData) -> ExprType {
 // | STRINGLITERAL
 fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
     let start_pos = parser_struct.current_token.token_position;
-    error!("Current parser struct parse primary {:?}", parser_struct);
 
     match parser_struct.current_token.token_kind {
         TokenKind::ID => {
             let lhs_ident = parse_identifier(parser_struct);
-            let sim_vast = VarUntyped::new(parser_struct.current_position.clone(), lhs_ident.copy_with_null_decl());
+            let sim_vast = VarUntyped::new(
+                parser_struct.current_position.clone(),
+                lhs_ident.copy_with_null_decl(),
+            );
 
             match parser_struct.current_token.token_kind {
                 TokenKind::LBRACKET => {
-                    match_and_consume_next_token(parser_struct);  // consume '['
+                    match_and_consume_next_token(parser_struct); // consume '['
                     let rhs_expr = parse_expr(parser_struct);
-                    match_and_consume_next_token(parser_struct);  // consume ']'
+                    match_and_consume_next_token(parser_struct); // consume ']'
 
-
-                    let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+                    let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
                     ExprType::ArrayExpr(ArrayExpr::new(finish_pos, sim_vast, Box::new(rhs_expr)))
                 }
                 TokenKind::LPAREN => {
                     let args = parse_argument_list(parser_struct);
-                    let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+                    let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
+
                     ExprType::CallExpr(CallExpr::new(finish_pos, lhs_ident, Box::new(args)))
                 }
                 _ => {
-                    let finish_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+                    let finish_pos = finish_position(&start_pos, &parser_struct.current_position);
                     ExprType::VarExpr(VarExpr::new(finish_pos, sim_vast))
                 }
             }
@@ -844,17 +862,17 @@ fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
         }
         TokenKind::INTLITERAL => {
             let int_literal = parse_int_literal(parser_struct);
-            let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let final_pos = finish_position(&start_pos, &parser_struct.current_position);
             ExprType::IntExpr(IntExpr::new(final_pos, int_literal))
         }
         TokenKind::FLOATLITERAL => {
             let float_literal = parse_float_literal(parser_struct);
-            let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let final_pos = finish_position(&start_pos, &parser_struct.current_position);
             ExprType::FloatExpr(FloatExpr::new(final_pos, float_literal))
         }
         TokenKind::BOOLEANLITERAL => {
             let bool_literal = parse_boolean_literal(parser_struct);
-            let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
+            let final_pos = finish_position(&start_pos, &parser_struct.current_position);
             ExprType::BooleanExpr(BooleanExpr::new(final_pos, bool_literal))
         }
         TokenKind::STRINGLITERAL => {
@@ -862,7 +880,6 @@ fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
             match string_literal {
                 ParserResult::Ok(ast_node) => match ast_node {
                     AstNode::StringLiteral(string_lit) => {
-                        // Note how doing it in one line made ownership pass easily.
                         let string_expr =
                             StringExpr::new(string_lit.source_position, Box::new(string_lit));
                         ExprType::StringExpr(string_expr)
@@ -873,7 +890,10 @@ fn parse_primary_expr(parser_struct: &mut ParserData) -> ExprType {
                 ParserResult::NoMatch { expect } => panic!("Should always match."),
             }
         }
-        _ => panic!("Illegal primary expression"),
+        _ => panic!(
+            "Illegal primary expression {:?}",
+            parser_struct.current_token
+        ),
     }
 }
 
@@ -889,7 +909,7 @@ fn parse_parameter_list(parser_data: &mut ParserData) -> ListType {
         proper_para_list
     } else {
         match_and_consume_next_token(parser_data); // Consume RPAREN
-        let final_pos = finish_source_pos(&start_pos, &parser_data.current_token.token_position);
+        let final_pos = finish_position(&start_pos, &parser_data.current_token.token_position);
         ListType::EmptyParamList(EmptyParamList::new(final_pos))
     }
 }
@@ -902,8 +922,7 @@ fn parse_proper_parameter_list(parser_data: &mut ParserData) -> ListType {
         TokenKind::COMMA => {
             match_and_consume_next_token(parser_data);
             let para_list = parse_proper_parameter_list(parser_data);
-            let final_pos =
-                finish_source_pos(&start_pos, &parser_data.current_token.token_position);
+            let final_pos = finish_position(&start_pos, &parser_data.current_token.token_position);
 
             ListType::ParamList(ParamList::new(final_pos, param_decl, Box::new(para_list)))
         }
@@ -926,15 +945,17 @@ fn parse_parameter_declaration(parser_data: &mut ParserData) -> ParaDecl {
     match parser_data.current_token.token_kind {
         TokenKind::LBRACKET => {
             let type_variant = parse_declarator(parser_data, Box::new(param_type));
-            let final_pos =
-                finish_source_pos(&start_pos, &parser_data.current_token.token_position);
+            let final_pos = finish_position(&start_pos, &parser_data.current_token.token_position);
             ParaDecl::new(final_pos, Box::new(type_variant), Box::new(ident))
         }
         _ => {
-            let final_pos =
-                finish_source_pos(&start_pos, &parser_data.current_token.token_position);
+            let final_pos = finish_position(&start_pos, &parser_data.current_token.token_position);
 
-            ParaDecl::new(final_pos, Box::new(AstTypeVariant::Primitive(param_type)), Box::new(ident))
+            ParaDecl::new(
+                final_pos,
+                Box::new(AstTypeVariant::Primitive(param_type)),
+                Box::new(ident),
+            )
         }
     }
 }
@@ -945,7 +966,7 @@ fn parse_argument_list(parser_struct: &mut ParserData) -> ListType {
     match_and_consume_next_token(parser_struct); // Consume LPAREN
 
     if parser_struct.current_token.token_kind == TokenKind::RPAREN {
-        let final_pos = finish_source_pos(&start, &parser_struct.current_position);
+        let final_pos = finish_position(&start, &parser_struct.current_position);
         match_and_consume_next_token(parser_struct); // Consume RPAREN
         return ListType::EmptyArgList(EmptyArgList::new(final_pos));
     }
@@ -960,9 +981,16 @@ fn parse_proper_argument_list(parser_struct: &mut ParserData) -> ListType {
     let start_pos = parser_struct.current_position;
     let arg = parse_arg(parser_struct);
 
+    let arg_expr = ExprType::Arg(arg);
+
     if parser_struct.current_token.token_kind != TokenKind::COMMA {
-        let final_pos = finish_source_pos(&start_pos, &parser_struct.current_position);
-        return ListType::EmptyArgList(EmptyArgList::new(final_pos));
+        let final_pos = finish_position(&start_pos, &parser_struct.current_position);
+        // Shouldn't return empty Arg List.
+        return ListType::ArgList(ArgList::new(
+            final_pos,
+            arg_expr,
+            Box::new(ListType::EmptyArgList(EmptyArgList::new(final_pos))),
+        ));
     }
 
     match_and_consume_next_token(parser_struct); // Consume COMMA
@@ -1085,7 +1113,7 @@ fn parse_type(parser_data: &mut ParserData) -> AstTypes {
         }
         _ => panic!(
             "\"{:?}\" wrong type. Type expected.",
-            parser_data
+            parser_data.current_token
         ),
     }
 }
@@ -1111,7 +1139,7 @@ fn accept_token(parser_struct: &mut ParserData, token: Token) -> bool {
     todo!("Complete accept token");
 }
 
-fn finish_source_pos(
+fn finish_position(
     init_source_position: &SourcePosition,
     end_source_position: &SourcePosition,
 ) -> SourcePosition {
@@ -1139,9 +1167,9 @@ static EXPR_FIRST_SET: Lazy<HashSet<TokenKind>> = Lazy::new(|| {
         TokenKind::LPAREN,
         TokenKind::SEMICOLON,
     ]
-        .iter()
-        .cloned()
-        .collect::<HashSet<_>>()
+    .iter()
+    .cloned()
+    .collect::<HashSet<_>>()
 });
 
 fn is_primitive_type(ast_type: &AstTypes) -> bool {

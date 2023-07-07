@@ -2,13 +2,15 @@ use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::ast::ident::Ident;
 use crate::ast::list::{EmptyArrayExprList, ListType};
 use crate::ast::literals::{BooleanLiteral, FloatLiteral, IntLiteral, Operator, StringLiteral};
 use crate::ast::variable::VarUntyped;
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_indent, generate_tabbed_string, print_newline_and_indent, SourcePosition};
+use crate::utils::{
+    generate_indent, generate_tabbed_string, print_newline_and_indent, SourcePosition,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExprType {
@@ -93,7 +95,6 @@ impl PrintUnparsedAST for ExprType {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Arg {
     pub source_position: SourcePosition,
@@ -119,8 +120,7 @@ impl std::fmt::Display for Arg {
 
 impl PrintAST for Arg {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr.visit_for_printing(depth + 1);
     }
@@ -134,7 +134,10 @@ impl PrintUnparsedAST for Arg {
 
 impl Arg {
     pub fn new(source_position: SourcePosition, e: Box<ExprType>) -> Self {
-        Self { source_position, expr: e }
+        Self {
+            source_position,
+            expr: e,
+        }
     }
 }
 
@@ -164,8 +167,7 @@ impl std::fmt::Display for ArrayExpr {
 
 impl PrintAST for ArrayExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.var.visit_for_printing(depth + 1);
         self.expr.visit_for_printing(depth + 1);
@@ -217,8 +219,7 @@ impl std::fmt::Display for AssignExpr {
 
 impl PrintAST for AssignExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expression_one.visit_for_printing(depth + 1);
         self.expression_two.visit_for_printing(depth + 1);
@@ -270,8 +271,7 @@ impl fmt::Display for ArrayInitExpr {
 
 impl PrintAST for ArrayInitExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.init_list.visit_for_printing(depth + 1);
     }
@@ -321,8 +321,7 @@ impl fmt::Display for BinaryExpr {
 
 impl PrintAST for BinaryExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expression_one.visit_for_printing(depth + 1);
         self.operator.visit_for_printing(depth + 1);
@@ -330,9 +329,9 @@ impl PrintAST for BinaryExpr {
     }
 }
 
-
 impl PrintUnparsedAST for BinaryExpr {
     fn unparse_to_code(&self, depth: i32) {
+        print!("(");
         self.expression_one.unparse_to_code(depth);
         print!(" ");
         self.operator.unparse_to_code(depth);
@@ -383,8 +382,7 @@ impl fmt::Display for BooleanExpr {
 
 impl PrintAST for BooleanExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.boolean_literal.visit_for_printing(depth + 1);
     }
@@ -431,8 +429,7 @@ impl std::fmt::Display for CallExpr {
 
 impl PrintAST for CallExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.ident.visit_for_printing(depth + 1);
         self.argument_list.visit_for_printing(depth + 1);
@@ -444,12 +441,15 @@ impl PrintUnparsedAST for CallExpr {
         self.ident.unparse_to_code(depth);
         print!("(");
         self.argument_list.unparse_to_code(depth);
-        print!(")");
     }
 }
 
 impl CallExpr {
-    pub fn new(source_position: SourcePosition, ident: Ident, argument_list: Box<ListType>) -> Self {
+    pub fn new(
+        source_position: SourcePosition,
+        ident: Ident,
+        argument_list: Box<ListType>,
+    ) -> Self {
         Self {
             source_position,
             ident,
@@ -478,8 +478,7 @@ impl fmt::Display for EmptyExpr {
 
 impl PrintAST for EmptyExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
 }
@@ -519,8 +518,7 @@ impl fmt::Display for FloatExpr {
 
 impl PrintAST for FloatExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.float_literal.visit_for_printing(depth + 1);
     }
@@ -556,14 +554,17 @@ impl Checking for IntExpr {
 
 impl fmt::Display for IntExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ source_position: {:?}, fl: {:?} }}", self.source_position, self.int_literal)
+        write!(
+            f,
+            "{{ source_position: {:?}, fl: {:?} }}",
+            self.source_position, self.int_literal
+        )
     }
 }
 
 impl PrintAST for IntExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.int_literal.visit_for_printing(depth + 1);
     }
@@ -609,8 +610,7 @@ impl fmt::Display for StringExpr {
 
 impl PrintAST for StringExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.string_literal.visit_for_printing(depth + 1);
     }
@@ -657,8 +657,7 @@ impl std::fmt::Display for UnaryExpr {
 
 impl PrintAST for UnaryExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.operator.visit_for_printing(depth + 1);
         self.expression.visit_for_printing(depth + 1);
@@ -697,15 +696,17 @@ impl Checking for VarExpr {
 
 impl fmt::Display for VarExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{{ source_position: {:?}, v: {:?} }}", self.source_position, self.var
+        write!(
+            f,
+            "{{ source_position: {:?}, v: {:?} }}",
+            self.source_position, self.var
         )
     }
 }
 
 impl PrintAST for VarExpr {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.var.visit_for_printing(depth + 1);
     }
@@ -719,7 +720,9 @@ impl PrintUnparsedAST for VarExpr {
 
 impl VarExpr {
     pub fn new(source_position: SourcePosition, var: VarUntyped) -> Self {
-        Self { source_position, var }
+        Self {
+            source_position,
+            var,
+        }
     }
 }
-

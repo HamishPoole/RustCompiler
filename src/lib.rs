@@ -8,7 +8,7 @@ use std::io;
 use std::io::Write;
 
 use crate::ast::{AstNode, PrintAST};
-use crate::parser::{parse_program, ParserData};
+use crate::parser::{parse_code, ParserData};
 use crate::scanner::Scanner;
 
 mod ast;
@@ -47,7 +47,7 @@ pub fn parse_print_ast(input_filepath: &str) {
 
     let scanner = Scanner::new(contents_string);
 
-    let program = parse_program(scanner);
+    let program = parse_code(scanner);
 
     program.print_program();
 }
@@ -57,7 +57,7 @@ pub fn parse_unparse(input_filepath: &str) {
 
     let scanner = Scanner::new(contents_string);
 
-    let program = parse_program(scanner);
+    let program = parse_code(scanner);
 
     program.print_unparsed_program();
 }
@@ -70,7 +70,7 @@ pub fn test_parser(input_filepath: &str) {
     // Passing clone creates local data in the object.
     // Write a loop that prints all the tokens of the Scanner object, until a TokenKind::EOF is returned.
 
-    let program = parse_program(scanner);
+    let program = parse_code(scanner);
     println!("{:?}", program);
 
     program.print_program();

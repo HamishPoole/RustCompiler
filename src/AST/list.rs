@@ -495,7 +495,7 @@ impl PrintAST for EmptyParamList {
 
 impl PrintUnparsedAST for EmptyParamList {
     fn unparse_to_code(&self, depth: i32) {
-        print!(")");
+        println!(")");
     }
 }
 
