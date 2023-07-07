@@ -333,11 +333,14 @@ fn handle_floats(adt: &mut ScannerProductType) -> Result<ScannerProductType, Str
 
 fn handle_strings(adt: &mut ScannerProductType) -> Result<ScannerProductType, String> {
     // Skip the initial quote
+    // TODO: Fix for \"a\" here.
 
     let curr_char = get_current_char(adt);
     let next_char = get_next_char(adt);
 
     match (curr_char, next_char) {
+        // Add more cases here for escaping.
+        // TODO: add case for escaping \'
         ('"', _) => {
             skip_next_character(adt);
             Ok(ScannerProductType {
@@ -347,7 +350,7 @@ fn handle_strings(adt: &mut ScannerProductType) -> Result<ScannerProductType, St
         }
         ('\\', _) => {
             // Generate a hash set of valid escape characters.
-            let escapes: HashSet<char> = ['n', 't', 'r', 'f', 'b', '\\', '"']
+            let escapes: HashSet<char> = ['n', 't', 'r', 'f', 'b', '\\', '"', '\'']
                 .iter()
                 .cloned()
                 .collect();

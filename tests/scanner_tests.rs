@@ -3,7 +3,7 @@
 #![allow(unused_mut)]
 #![allow(unused_imports)]
 
-use std::fs::File;
+use std::fs::{File, read_to_string};
 use std::io::Write;
 
 use log::{debug, info, warn};
@@ -11,13 +11,67 @@ use test_log::test;
 
 use vc::scanner;
 use vc::scanner::Scanner;
-use vc::token::TokenKind;
+use vc::token::{Token, TokenKind};
+use vc::utils::SourcePosition;
+
+fn scan_filepath(input_filepath: &str) -> Vec<Token> {
+    let input_filestring = read_to_string(input_filepath).expect("File reading error.");
+
+    let mut my_scanner = Scanner::new(input_filestring);
+
+    let mut token_vector: Vec<Token> = Vec::new();
+
+    loop {
+        let curr_token = my_scanner.get_next_token();
+        let curr_token_kind = curr_token.token_kind;
+        token_vector.push(curr_token);
+
+        if curr_token_kind == TokenKind::EOF || curr_token_kind == TokenKind::ERROR
+        { break; }
+    }
+
+    token_vector
+}
+
+#[test]
+fn test_string_scanning() {
+    let mut token_vector: Vec<Token> = scan_filepath("./tests/scanner/inputFiles/string.vc");
+
+    log::error!("{:?}", token_vector);
+
+    for token in token_vector.iter() {
+        log::debug!("Token: {:?}", token);
+    }
+
+    let expected_result = vec!(
+        Token::new(TokenKind::STRINGLITERAL,
+                   "comp3131".to_string(),
+                   SourcePosition::new(3, 3, 3, 10)),
+        Token::new(TokenKind::STRINGLITERAL,
+                   "x\\ty".to_string(),
+                   SourcePosition::new(4, 4, 3, 6)),
+        Token::new(TokenKind::STRINGLITERAL,
+                   "carriage return\\r".to_string(),
+                   SourcePosition::new(5, 5, 3, 19)),
+        Token::new(TokenKind::STRINGLITERAL,
+                   "a\\'\\\\b".to_string(),
+                   SourcePosition::new(6, 6, 3, 8)),
+        Token::new(TokenKind::STRINGLITERAL,
+                   "comp3131\\ncomp9102".to_string(),
+                   SourcePosition::new(7, 7, 3, 20)),
+        Token::new(TokenKind::EOF,
+                   "$".to_string(),
+                   SourcePosition::new(8, 8, 1, 1)),
+    );
+
+    assert_eq!(token_vector, expected_result);
+}
 
 #[test]
 fn test_seps_newline() {
     let mut token_vector: Vec<TokenKind> = Vec::new();
 
-    let filepath = "./tests/custom/lparen_test.vc";
+    let filepath = "./tests/scanner/inputFiles/lparen_test.vc";
     let file_contents = std::fs::read_to_string(filepath).expect("File reading error.");
 
     let mut my_scanner = Scanner::new(file_contents);
@@ -27,11 +81,8 @@ fn test_seps_newline() {
         let mut curr_token = my_scanner.get_next_token();
         token_vector.push(curr_token.token_kind);
 
-        if curr_token.token_kind == TokenKind::EOF
-            || curr_token.token_kind == TokenKind::ERROR
-        {
-            break;
-        }
+        if curr_token.token_kind == TokenKind::EOF || curr_token.token_kind == TokenKind::ERROR
+        { break; }
     }
 
     log::debug!("{:?}", token_vector);
@@ -50,7 +101,7 @@ fn test_seps_newline() {
 fn test_all_separators() {
     let mut token_vector: Vec<TokenKind> = Vec::new();
 
-    let filepath = "./tests/custom/all_separators.vc";
+    let filepath = "./tests/scanner/inputFiles/all_separators.vc";
     let file_contents = std::fs::read_to_string(filepath).expect("File reading error.");
 
     let mut my_scanner = Scanner::new(file_contents);
@@ -91,7 +142,7 @@ fn test_all_separators() {
 fn test_literals_identifiers() {
     let mut token_vector: Vec<TokenKind> = Vec::new();
 
-    let filepath = "./tests/custom/literals_identifiers.vc";
+    let filepath = "./tests/scanner/inputFiles/literals_identifiers.vc";
     let file_contents = std::fs::read_to_string(filepath).expect("File reading error.");
 
     let mut my_scanner = Scanner::new(file_contents);
@@ -133,7 +184,7 @@ fn test_literals_identifiers() {
 fn test_gcd_signature() {
     let mut token_vector: Vec<TokenKind> = Vec::new();
 
-    let filepath = "./tests/custom/simple_gcd_signature.vc";
+    let filepath = "./tests/scanner/inputFiles/simple_gcd_signature.vc";
     let file_contents = std::fs::read_to_string(filepath).expect("File reading error.");
 
     let mut my_scanner = Scanner::new(file_contents);

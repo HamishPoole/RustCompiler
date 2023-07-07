@@ -5,35 +5,35 @@
 
 use std::path::PathBuf;
 
-use clap::{Arg, ArgAction, ArgMatches, Args, Command, FromArgMatches, Parser, Subcommand};
+use clap::{Arg, ArgAction, ArgMatches, Args, Command, crate_version, FromArgMatches, Parser, Subcommand};
 use log::error;
 use regex::internal::Compiler;
 
-use vc::{parse_print_ast, parse_unparse, test_parser, test_scanner};
+use vc::{parse_print_ast, parse_unparse, print_tokens, test_parser};
 use vc::parser::{parse_program, ParserData};
 use vc::scanner::Scanner;
 
 #[derive(Parser)]
 #[clap(author = "Hamish Poole", about = "A compiler for the VC language.")]
-#[command(propagate_version = true)]
+#[command(version = crate_version!(), propagate_version = true)]
 struct Cli {
-    /// Filename to compile
-    input_filepath: Option<String>,
-
     #[command(subcommand)]
     command: Commands,
 }
 
-#[derive(Subcommand)]
+#[derive(Debug, Subcommand)]
 enum Commands {
     /// Scans the input file and outputs tokens found.
-    Scan,
+    #[command(arg_required_else_help = true)]
+    Scan { input_filepath: String },
 
     /// Parses the input file and prints the AST produced.
-    Parse,
+    #[command(arg_required_else_help = true)]
+    Parse { input_filepath: String },
 
     /// Parses the input file, then unparses the AST and prints an identical result.
-    Unparse,
+    #[command(arg_required_else_help = true)]
+    Unparse { input_filepath: String },
 }
 
 #[derive(Args)]
@@ -42,24 +42,18 @@ struct CommandArgs {}
 fn main() {
     let cli = Cli::parse();
 
-    let input_filepath = cli.input_filepath.as_deref().unwrap();
-
-    match &cli.command {
-        Commands::Scan => {
-            test_scanner(input_filepath);
+    match cli.command {
+        Commands::Scan { input_filepath } => {
+            print_tokens(&input_filepath);
         }
-        Commands::Parse => {
-            parse_print_ast(input_filepath);
+        Commands::Parse { input_filepath } => {
+            parse_print_ast(&input_filepath);
         }
-        Commands::Unparse => {
-            parse_unparse(input_filepath);
+        Commands::Unparse { input_filepath } => {
+            parse_unparse(&input_filepath);
         }
     }
-
-    // let mut scanner = Scanner::new(contents_string);
-    // let mut ast = parse_program(scanner);
 }
-
 
 #[cfg(test)]
 mod tests {

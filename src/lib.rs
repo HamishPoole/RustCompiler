@@ -20,7 +20,7 @@ pub mod stages;
 pub mod token;
 pub mod utils;
 
-pub fn test_scanner(input_filepath: &str) {
+pub fn print_tokens(input_filepath: &str) {
     let input_filestring = std::fs::read_to_string(input_filepath).expect("File reading error.");
 
     let mut my_scanner = Scanner::new(input_filestring);

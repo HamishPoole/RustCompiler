@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::utils::SourcePosition;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
     pub token_kind: TokenKind,
     pub spelling: String,

@@ -62,7 +62,6 @@ impl Scanner {
             final_token_kind: TokenKind::ERROR,
         };
         let final_product_type = get_token(&mut product_type);
-        debug!("Product type after get_token: {:?}", final_product_type);
 
         self.global_source_position = final_product_type.curr_source_pos.clone();
         self.global_source_position.char_start = self.global_source_position.char_end + 1;
@@ -77,25 +76,10 @@ impl Scanner {
     }
 }
 
-/*
-impl Iterator for Counter {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.count += 1;
-        Some(self.count)
-    }
-}
-TODO: Implement Iterator trait for Scanner.
- */
-
 fn get_token(adt: &mut ScannerProductType) -> ScannerProductType {
     skip_spaces_comments_newlines(adt);
 
-    error!("Reached handle_tokens");
-    error!("Current token is {:?}", adt.curr_token_spelling);
     let result = handle_tokens(adt).unwrap();
-    error!("Result is {:?}", result);
     let end_diff: i32 = result.curr_token_spelling.len() as i32 - 1;
 
     ScannerProductType {
@@ -178,7 +162,6 @@ fn skip_spaces_comments_newlines(adt: &mut ScannerProductType) {
 }
 
 fn handle_single_line_comment(adt: &mut ScannerProductType) {
-    error!("Reached single line comment");
     skip_next_character(adt);
     let curr_char = get_current_char(adt);
 
@@ -214,10 +197,6 @@ fn handle_remove_spaces(adt: &mut ScannerProductType) {
 }
 
 fn handle_tab(adt: &mut ScannerProductType) {
-    error!("Reached handle tab");
-    error!("Current character is {:?}", get_current_char(adt));
-    error!("Current source position is {:?}", adt.curr_source_pos);
-    // NB, if this breaks, kick self for skipping unit test.
     adt.curr_source_pos.char_start += TAB_SIZE - (adt.curr_source_pos.char_start % TAB_SIZE);
     adt.curr_source_pos.char_end += TAB_SIZE - (adt.curr_source_pos.char_end % TAB_SIZE);
     skip_next_character(adt);
@@ -225,9 +204,6 @@ fn handle_tab(adt: &mut ScannerProductType) {
 }
 
 fn handle_newline(adt: &mut ScannerProductType) {
-    error!("Reached handle newline");
-    error!("Current character is {:?}", get_current_char(adt));
-
     if adt.file_contents[adt.curr_char_index] == '\n' {
         skip_next_character(adt);
     }
