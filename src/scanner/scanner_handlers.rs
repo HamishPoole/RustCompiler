@@ -4,7 +4,7 @@ use std::str::FromStr;
 use log::error;
 
 use crate::scanner::{
-    accept_next_character, get_current_char, get_next_char, ScannerProductType, skip_next_character,
+    accept_next_character, get_current_char, get_next_char, skip_next_character, ScannerProductType,
 };
 use crate::token::TokenKind;
 
@@ -110,9 +110,6 @@ pub fn handle_separators(adt: &mut ScannerProductType) -> Result<ScannerProductT
 fn handle_operators(adt: &mut ScannerProductType) -> Result<ScannerProductType, String> {
     let current_char = get_current_char(adt);
     let next_char = get_next_char(adt);
-
-    log::debug!("Reached handle_operators");
-    log::debug!("Current char: {}", current_char);
 
     match (current_char, next_char) {
         ('+', next_char) => {
@@ -256,13 +253,6 @@ fn handle_parse_ids(adt: &mut ScannerProductType) -> Result<ScannerProductType, 
     match (curr_char, next_char) {
         (c, _) if c.is_alphabetic() || c == '_' => handle_identifiers(adt),
         _ => {
-            error!(
-                "TokenKind from str {:?}",
-                TokenKind::from_str(&adt.curr_token_spelling)
-            );
-
-            error!("Current spelling: {:?}", adt.curr_token_spelling);
-
             if adt.curr_token_spelling == "true" || adt.curr_token_spelling == "false" {
                 Ok(ScannerProductType {
                     final_token_kind: TokenKind::BOOLEANLITERAL,
@@ -326,7 +316,7 @@ fn handle_floats(adt: &mut ScannerProductType) -> Result<ScannerProductType, Str
     }
 
     Ok(ScannerProductType {
-        final_token_kind: TokenKind::FLOAT,
+        final_token_kind: TokenKind::FLOATLITERAL,
         ..adt.clone()
     })
 }

@@ -31,8 +31,7 @@ impl fmt::Display for Operator {
 
 impl PrintAST for Operator {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
     }
 }
@@ -77,8 +76,7 @@ impl fmt::Display for Terminal {
 
 impl PrintAST for Terminal {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
     }
 }
@@ -123,8 +121,7 @@ impl fmt::Display for IntLiteral {
 
 impl PrintAST for IntLiteral {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
     }
 }
@@ -169,8 +166,7 @@ impl fmt::Display for FloatLiteral {
 
 impl PrintAST for FloatLiteral {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
     }
 }
@@ -215,8 +211,7 @@ impl fmt::Display for BooleanLiteral {
 
 impl PrintAST for BooleanLiteral {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
     }
 }
@@ -261,15 +256,15 @@ impl fmt::Display for StringLiteral {
 
 impl PrintAST for StringLiteral {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{} ({})", tabbed_string, self.spelling);
+        // Check this.
     }
 }
 
 impl PrintUnparsedAST for StringLiteral {
     fn unparse_to_code(&self, depth: i32) {
-        print!("{}", self.spelling);
+        print!("\"{}\"", self.spelling);
     }
 }
 

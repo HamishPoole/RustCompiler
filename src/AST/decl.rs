@@ -2,15 +2,17 @@ use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::ast::array_type::{ArrayType, AstTypeVariant};
 use crate::ast::expression::ExprType;
 use crate::ast::ident::Ident;
 use crate::ast::list::{ListType, ParamList};
 use crate::ast::primitive_types::AstTypes;
 use crate::ast::statement::StmtType;
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::globals::TAB_SIZE;
-use crate::utils::{generate_tabbed_string, print_newline_and_indent, SourcePosition};
+use crate::utils::{
+    generate_tabbed_string, print_indent, print_newline_and_indent, SourcePosition,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum DeclType {
@@ -70,8 +72,7 @@ impl fmt::Display for FuncDecl {
 
 impl PrintAST for FuncDecl {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.function_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
@@ -82,7 +83,13 @@ impl PrintAST for FuncDecl {
 
 impl PrintUnparsedAST for FuncDecl {
     fn unparse_to_code(&self, depth: i32) {
-        print_newline_and_indent(depth);
+        // If line start and char start are 1, print newline.
+        // Else, print indent
+        if self.source_position.line_start == 1 && self.source_position.char_start == 1 {
+            print_newline_and_indent(depth);
+        } else {
+            print_indent(depth);
+        }
         self.function_type.unparse_to_code(depth);
         print!(" ");
         self.ident.unparse_to_code(depth);
@@ -137,8 +144,7 @@ impl Checking for GlobalVarDecl {
 
 impl PrintAST for GlobalVarDecl {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.declaration_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
@@ -148,7 +154,7 @@ impl PrintAST for GlobalVarDecl {
 
 impl PrintUnparsedAST for GlobalVarDecl {
     fn unparse_to_code(&self, depth: i32) {
-        print_newline_and_indent(depth);
+        print_indent(depth);
         self.declaration_type.unparse_to_code(depth);
         print!(" ");
         self.ident.unparse_to_code(depth);
@@ -207,8 +213,7 @@ impl Checking for LocalVarDecl {
 
 impl PrintAST for LocalVarDecl {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.declaration_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
@@ -281,8 +286,7 @@ impl fmt::Display for ParaDecl {
 
 impl PrintAST for ParaDecl {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.declaration_type.visit_for_printing(depth + 1);
         self.ident.visit_for_printing(depth + 1);
@@ -306,7 +310,11 @@ impl PrintUnparsedAST for ParaDecl {
 }
 
 impl ParaDecl {
-    pub fn new(source_position: SourcePosition, decl_type: Box<AstTypeVariant>, ident: Box<Ident>) -> Self {
+    pub fn new(
+        source_position: SourcePosition,
+        decl_type: Box<AstTypeVariant>,
+        ident: Box<Ident>,
+    ) -> Self {
         Self {
             source_position,
             declaration_type: decl_type,

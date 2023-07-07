@@ -1,12 +1,12 @@
 use std::fmt;
-use std::fs::File;
-use std::io::{BufWriter, Write};
+use std::io::Write;
 
-use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
 use crate::ast::expression::ExprType;
-use crate::ast::list::{DeclList, ListType, StmtList};
-use crate::globals::TAB_SIZE;
-use crate::utils::{generate_indent, generate_tabbed_string, print_indent, print_newline_and_indent, SourcePosition};
+use crate::ast::list::ListType;
+use crate::ast::{Checking, PrintAST, PrintUnparsedAST};
+use crate::utils::{
+    generate_indent, generate_tabbed_string, print_indent, print_newline_and_indent, SourcePosition,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum StmtType {
@@ -28,7 +28,9 @@ impl PrintAST for StmtType {
             StmtType::BreakStmt(break_stmt) => break_stmt.visit_for_printing(depth),
             StmtType::CompoundStmt(compound_stmt) => compound_stmt.visit_for_printing(depth),
             StmtType::ContinueStmt(continue_stmt) => continue_stmt.visit_for_printing(depth),
-            StmtType::EmptyCompoundStmt(empty_compound_stmt) => empty_compound_stmt.visit_for_printing(depth),
+            StmtType::EmptyCompoundStmt(empty_compound_stmt) => {
+                empty_compound_stmt.visit_for_printing(depth)
+            }
             StmtType::EmptyStmt(empty_stmt) => empty_stmt.visit_for_printing(depth),
             StmtType::ExprStmt(expr_stmt) => expr_stmt.visit_for_printing(depth),
             StmtType::ForStmt(for_stmt) => for_stmt.visit_for_printing(depth),
@@ -42,26 +44,18 @@ impl PrintAST for StmtType {
 impl PrintUnparsedAST for StmtType {
     fn unparse_to_code(&self, depth: i32) {
         match self {
-            StmtType::BreakStmt(break_stmt) => break_stmt.unparse_to_code(depth)
-            ,
-            StmtType::CompoundStmt(compound_stmt) => compound_stmt.unparse_to_code(depth)
-            ,
-            StmtType::ContinueStmt(continue_stmt) => continue_stmt.unparse_to_code(depth)
-            ,
-            StmtType::EmptyCompoundStmt(empty_compound_stmt) => empty_compound_stmt.unparse_to_code(depth)
-            ,
-            StmtType::EmptyStmt(empty_stmt) => empty_stmt.unparse_to_code(depth)
-            ,
-            StmtType::ExprStmt(expr_stmt) => expr_stmt.unparse_to_code(depth)
-            ,
-            StmtType::ForStmt(for_stmt) => for_stmt.unparse_to_code(depth)
-            ,
-            StmtType::IfStmt(if_stmt) => if_stmt.unparse_to_code(depth)
-            ,
-            StmtType::ReturnStmt(return_stmt) => return_stmt.unparse_to_code(depth)
-            ,
-            StmtType::WhileStmt(while_stmt) => while_stmt.unparse_to_code(depth)
-            ,
+            StmtType::BreakStmt(break_stmt) => break_stmt.unparse_to_code(depth),
+            StmtType::CompoundStmt(compound_stmt) => compound_stmt.unparse_to_code(depth),
+            StmtType::ContinueStmt(continue_stmt) => continue_stmt.unparse_to_code(depth),
+            StmtType::EmptyCompoundStmt(empty_compound_stmt) => {
+                empty_compound_stmt.unparse_to_code(depth)
+            }
+            StmtType::EmptyStmt(empty_stmt) => empty_stmt.unparse_to_code(depth),
+            StmtType::ExprStmt(expr_stmt) => expr_stmt.unparse_to_code(depth),
+            StmtType::ForStmt(for_stmt) => for_stmt.unparse_to_code(depth),
+            StmtType::IfStmt(if_stmt) => if_stmt.unparse_to_code(depth),
+            StmtType::ReturnStmt(return_stmt) => return_stmt.unparse_to_code(depth),
+            StmtType::WhileStmt(while_stmt) => while_stmt.unparse_to_code(depth),
         }
     }
 }
@@ -86,8 +80,7 @@ impl fmt::Display for BreakStmt {
 
 impl PrintAST for BreakStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
 }
@@ -127,8 +120,7 @@ impl fmt::Display for CompoundStmt {
 
 impl PrintAST for CompoundStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.decl_list.visit_for_printing(depth + 1);
         self.stmt_list.visit_for_printing(depth + 1);
@@ -138,7 +130,8 @@ impl PrintAST for CompoundStmt {
 impl PrintUnparsedAST for CompoundStmt {
     fn unparse_to_code(&self, depth: i32) {
         print!("{{");
-        print_newline_and_indent(depth);
+        print_indent(depth);
+        // Check depth + 1 here.  Might need to be depth.
 
         self.decl_list.unparse_to_code(depth + 1);
         self.stmt_list.unparse_to_code(depth + 1);
@@ -150,7 +143,11 @@ impl PrintUnparsedAST for CompoundStmt {
 }
 
 impl CompoundStmt {
-    pub fn new(decl_list: Box<ListType>, stmt_list: Box<ListType>, source_position: SourcePosition) -> Self {
+    pub fn new(
+        decl_list: Box<ListType>,
+        stmt_list: Box<ListType>,
+        source_position: SourcePosition,
+    ) -> Self {
         Self {
             decl_list,
             stmt_list,
@@ -178,8 +175,7 @@ impl fmt::Display for ContinueStmt {
 
 impl PrintAST for ContinueStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
 }
@@ -216,8 +212,7 @@ impl fmt::Display for EmptyStmt {
 
 impl PrintAST for EmptyStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
 }
@@ -255,8 +250,7 @@ impl fmt::Display for ExprStmt {
 
 impl PrintAST for ExprStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr.visit_for_printing(depth + 1);
     }
@@ -279,7 +273,6 @@ impl ExprStmt {
     }
 }
 
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct EmptyCompoundStmt {
     source_position: SourcePosition,
@@ -299,8 +292,7 @@ impl fmt::Display for EmptyCompoundStmt {
 
 impl PrintAST for EmptyCompoundStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
     }
 }
@@ -312,12 +304,9 @@ impl PrintUnparsedAST for EmptyCompoundStmt {
     }
 }
 
-
 impl EmptyCompoundStmt {
     pub fn new(source_position: SourcePosition) -> Self {
-        Self {
-            source_position,
-        }
+        Self { source_position }
     }
 }
 
@@ -344,8 +333,7 @@ impl fmt::Display for ForStmt {
 
 impl PrintAST for ForStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr_1.visit_for_printing(depth + 1);
         self.expr_2.visit_for_printing(depth + 1);
@@ -374,7 +362,13 @@ impl PrintUnparsedAST for ForStmt {
 }
 
 impl ForStmt {
-    pub fn new(source_position: SourcePosition, expr_1: Box<ExprType>, expr_2: Box<ExprType>, expr_3: Box<ExprType>, stmt: Box<StmtType>) -> Self {
+    pub fn new(
+        source_position: SourcePosition,
+        expr_1: Box<ExprType>,
+        expr_2: Box<ExprType>,
+        expr_3: Box<ExprType>,
+        stmt: Box<StmtType>,
+    ) -> Self {
         Self {
             source_position,
             expr_1,
@@ -407,18 +401,20 @@ impl fmt::Display for IfStmt {
 
 impl PrintAST for IfStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
+        self.expr.visit_for_printing(depth + 1);
+        self.stmt_1.visit_for_printing(depth + 1);
+        self.stmt_2.visit_for_printing(depth + 1);
     }
 }
 
 impl PrintUnparsedAST for IfStmt {
     fn unparse_to_code(&self, depth: i32) {
-        print_indent(depth);
+        print_newline_and_indent(depth);
         print!("if (");
         self.expr.unparse_to_code(depth);
-        print!(") ");
+        print!(")");
         if let StmtType::CompoundStmt(_) = *self.stmt_1 {
             self.stmt_1.unparse_to_code(depth);
         } else {
@@ -428,12 +424,12 @@ impl PrintUnparsedAST for IfStmt {
         match *self.stmt_2 {
             StmtType::EmptyStmt(_) => (),
             StmtType::IfStmt(_) => {
-                print!("else");
+                print!("else ");
                 self.stmt_2.unparse_to_code(depth);
             }
             _ => {
                 print_newline_and_indent(depth);
-                print!("else");
+                print!("else ");
                 let extra_depth_s2 = match *self.stmt_2 {
                     StmtType::CompoundStmt(_) => 0,
                     _ => 1,
@@ -446,7 +442,12 @@ impl PrintUnparsedAST for IfStmt {
 }
 
 impl IfStmt {
-    pub fn new(source_position: SourcePosition, expr: Box<ExprType>, stmt_1: Box<StmtType>, stmt_2: Box<StmtType>) -> Self {
+    pub fn new(
+        source_position: SourcePosition,
+        expr: Box<ExprType>,
+        stmt_1: Box<StmtType>,
+        stmt_2: Box<StmtType>,
+    ) -> Self {
         Self {
             source_position,
             expr,
@@ -477,8 +478,7 @@ impl fmt::Display for ReturnStmt {
 
 impl PrintAST for ReturnStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr.visit_for_printing(depth + 1);
     }
@@ -505,8 +505,8 @@ impl ReturnStmt {
 #[derive(Clone, Debug, PartialEq)]
 pub struct WhileStmt {
     source_position: SourcePosition,
-    expr: Box<ExprType>,
     stmt: Box<StmtType>,
+    expr: Box<ExprType>,
 }
 
 impl Checking for WhileStmt {
@@ -523,8 +523,7 @@ impl fmt::Display for WhileStmt {
 
 impl PrintAST for WhileStmt {
     fn visit_for_printing(&self, depth: i32) {
-        let tabbed_string = generate_tabbed_string(
-            std::any::type_name::<Self>(), depth);
+        let tabbed_string = generate_tabbed_string(std::any::type_name::<Self>(), depth);
         println!("{}", tabbed_string);
         self.expr.visit_for_printing(depth);
         self.stmt.visit_for_printing(depth);

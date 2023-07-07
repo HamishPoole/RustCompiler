@@ -5,13 +5,15 @@
 
 use std::path::PathBuf;
 
-use clap::{Arg, ArgAction, ArgMatches, Args, Command, crate_version, FromArgMatches, Parser, Subcommand};
+use clap::{
+    crate_version, Arg, ArgAction, ArgMatches, Args, Command, FromArgMatches, Parser, Subcommand,
+};
 use log::error;
 use regex::internal::Compiler;
 
-use vc::{parse_print_ast, parse_unparse, print_tokens, test_parser};
-use vc::parser::{parse_program, ParserData};
+use vc::parser::{parse_code, ParserData};
 use vc::scanner::Scanner;
+use vc::{parse_print_ast, parse_unparse, print_tokens, test_parser};
 
 #[derive(Parser)]
 #[clap(author = "Hamish Poole", about = "A compiler for the VC language.")]
@@ -40,6 +42,7 @@ enum Commands {
 struct CommandArgs {}
 
 fn main() {
+    pretty_env_logger::init();
     let cli = Cli::parse();
 
     match cli.command {

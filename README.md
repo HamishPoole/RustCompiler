@@ -6,31 +6,42 @@ WIP.
 </p>
 <h2 align="center">Usage</h2>
 
-<h3 align="center">Setup</h3>
-<div class="flex-container" style="display: flex; justify-content: center;">
-<div class="flex-item" style="text-align: center;">
-<ul style="list-style-position: inside; display: inline-block; text-align: left;">
-<li>First, clone the repository.</li>
-<pre>
-git@github.com:HamishPoole/RustCompiler.git
-</pre>
-<li>Second, build the compiler locally using build_locally.</li>
-<pre>
-. ./build_locally.sh
-</pre>
-</ul>
-</div>
-</div>
+### Setup:
 
-<h3 align="center">Running</h3>
-<div class="flex-container" style="display: flex; justify-content: center;">
-<div class="flex-item" style="text-align: center;">
-<ul style="list-style-position: inside; display: inline-block; text-align: left;">
-<li> See vc --help for the full help output.  Below is the recommended command to print a parse tree.</li>
-</ul>
-</div>
-</div>
+- Clone the repository.
 
 ```
-vc path_to_valid_input_file parse
+git clone git@github.com:HamishPoole/RustCompiler.git
+```
+
+- Build using build locally.
+
+```
+source build_locally.sh
+```
+
+- Either install locally via install locally
+
+```
+source install_locally.sh
+```
+
+- Or alias the build binary to vc
+
+```
+alias vc="./vc"
+```
+
+### Usage:
+
+- Parse a file and print the abstract syntax tree with the following command.
+
+```
+vc parse <filepath>
+```
+
+- Parse, and print out the original file from the abstract syntax tree using unparse.
+
+```
+vc unparse <filepath>
 ```
